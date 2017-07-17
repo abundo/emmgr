@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+'''
+CLI for common operations in emmgr
+'''
+
+import os
+import sys
+import yaml
+from orderedattrdict import AttrDict
+
+with open("/etc/emmgr/emmgr.yaml", "r") as f:
+    try:
+        configtmp = yaml.load(f)
+    except yaml.YAMLError as err:
+        print("Error: Cannot load configuration, err: %s" % err)
+        sys.exit(1)
+sys.path.insert(0, '/opt')
+
+
+import emmgr.lib.config as config
+import emmgr.lib.util as util
+
+
+modules = AttrDict()
+modules.em = AttrDict( module='emmgr/lib/element.py', help='Manage elements')
+
+
+def usage():
+    print("""
+Usage:
+    emmgr <module> <parameters>
+
+Available modules:""")
+    for key, val in modules.items():
+        print("    %-10s   %s " % (key, val["help"]))
+    print("""
+For help on modules, use
+    emmgr <module> -h
+""")
+    sys.exit(1)
+
+
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        usage()
+    mod = sys.argv[1]
+    if mod not in modules:
+        print("Error: unknown module %s" % mod)
+        sys.exit(1)
+
+    sys.argv.pop(1)
+
+    module = modules[mod]
+    modulepath = config.basedir + os.sep + module.module
+    m = util.import_file(modulepath)
+    m.main()

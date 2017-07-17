@@ -1,0 +1,6 @@
+---
+driver: vrp/vrp_mgr
+interfaces:
+  
+default_firmware: 'none'
+firmware_filter: 'none'

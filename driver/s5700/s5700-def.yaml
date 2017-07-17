@@ -1,0 +1,127 @@
+---
+driver: vrp/vrp_mgr
+config:
+  clear_interface:
+    cmd:
+    - "clear configuration interface {{ interface_name }}"
+
+interfaces:
+  "GigabitEthernet0/0/1":
+    ifno: 1
+    role: customer
+    cvlan: 2000
+  "GigabitEthernet0/0/2":
+    ifno: 2
+    role: customer
+    cvlan: 2001
+  "GigabitEthernet0/0/3":
+    ifno: 3
+    role: customer
+    cvlan: 2002
+  "GigabitEthernet0/0/4":
+    ifno: 4
+    role: customer
+    cvlan: 2003
+  "GigabitEthernet0/0/5":
+    ifno: 5
+    role: customer
+    cvlan: 2004
+  "GigabitEthernet0/0/6":
+    ifno: 6
+    role: customer
+    cvlan: 2005
+  "GigabitEthernet0/0/7":
+    ifno: 7
+    role: customer
+    cvlan: 2006
+  "GigabitEthernet0/0/8":
+    ifno: 8
+    role: customer
+    cvlan: 2007
+  "GigabitEthernet0/0/9":
+    ifno: 9
+    role: customer
+    cvlan: 2008
+  "GigabitEthernet0/0/10":
+    ifno: 10
+    role: customer
+    cvlan: 2009
+  "GigabitEthernet0/0/11":
+    ifno: 11
+    role: customer
+    cvlan: 2010
+  "GigabitEthernet0/0/12":
+    ifno: 12
+    role: customer
+    cvlan: 2011
+  "GigabitEthernet0/0/13":
+    ifno: 13
+    role: customer
+    cvlan: 2012
+  "GigabitEthernet0/0/14":
+    ifno: 14
+    role: customer
+    cvlan: 2013
+  "GigabitEthernet0/0/15":
+    ifno: 15
+    role: customer
+    cvlan: 2014
+  "GigabitEthernet0/0/16":
+    ifno: 16
+    role: customer
+    cvlan: 2015
+  "GigabitEthernet0/0/17":
+    ifno: 17
+    role: customer
+    cvlan: 2016
+  "GigabitEthernet0/0/18":
+    ifno: 18
+    role: customer
+    cvlan: 2017
+  "GigabitEthernet0/0/19":
+    ifno: 19
+    role: customer
+    cvlan: 2018
+  "GigabitEthernet0/0/20":
+    ifno: 20
+    role: customer
+    cvlan: 2019
+  "GigabitEthernet0/0/21":
+    ifno: 21
+    role: customer
+    cvlan: 2020
+    combo: 1
+  "GigabitEthernet0/0/22":
+    ifno: 22
+    role: customer
+    cvlan: 2021
+    combo: 1
+  "GigabitEthernet0/0/23":
+    ifno: 23
+    role: customer
+    cvlan: 2022
+    combo: 1
+  "GigabitEthernet0/0/24":
+    ifno: 24
+    role: customer
+    cvlan: 2023
+    combo: 1
+  "XGigabitEthernet0/0/1":
+    ifno: 25
+    role: uplink
+    cvlan: 2024
+  "XGigabitEthernet0/0/2":
+    ifno: 26
+    role: uplink
+    cvlan: 2025
+  "XGigabitEthernet0/0/3":
+    ifno: 27
+    role: uplink
+    cvlan: 2026
+  "XGigabitEthernet0/0/4":
+    ifno: 28
+    role: uplink
+    cvlan: 2027
+  
+default_firmware: 's5700-x-li-v200r009c00spc500.cc'
+firmware_filter: 's5700.*'

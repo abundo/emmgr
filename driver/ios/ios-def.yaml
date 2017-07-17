@@ -1,0 +1,7 @@
+---
+driver: ios/ios_mgr
+interfaces:
+  
+default_firmware: 'none'
+firmware_filter: 'none'
+firmware_device: 'flash:'

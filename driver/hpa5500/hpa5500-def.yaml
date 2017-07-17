@@ -1,0 +1,4 @@
+---
+driver: ????
+  
+firmware_filter: 'hpa5500-.*'

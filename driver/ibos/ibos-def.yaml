@@ -1,0 +1,8 @@
+---
+driver: ibos/ibos_mgr
+firmware_filter: 'none'
+
+cli:
+  clear_interface:
+    # todo, has no command, need to run code...
+    # cmd: "clear configuration interface {{ interface_name }}"

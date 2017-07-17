@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Index{% endblock %}
+
+{% block content %}
+<h1>OBS! Not implemented yet!</h1>
+<h1>Login</h1>
+<br>
+<div class="panel panel-default" style="width: 90%;">
+<form id="form" method="get" class="form-vertical" style="width: 100%;">
+    <div class="panel-body">
+        <div class='row'>
+		    <div class="form-group col-lg-6">
+                <label class='col-lg-5 control-label'>Username</label>
+                <div class='col-lg-7 selectContainer'>
+                    <input type="text" class="form-control" name="username" id="username" placeholder="Username" value="{{query['username'] }}">
+                </div>
+            </div>
+        </div>
+    	<div class='row'>
+		    <div class="form-group col-lg-6">
+                <label class='col-lg-5 control-label'>Password</label>
+                <div class='col-lg-7 selectContainer'>
+                    <input type="text" class="form-control" name="password" id="password" placeholder="Password" value="{{query['password'] }}">
+                </div>
+            </div>
+		</div>
+		<button type="submit" class="btn btn-primary">Login</button>
+    </div>
+</form>
+</div>
+
+{% endblock %}
