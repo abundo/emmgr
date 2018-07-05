@@ -1,6 +1,4 @@
 ---
 driver: ios/ios_mgr
-  
-default_firmware: 'cat4500e-universalk9.SSA.03.04.06.SG6ES.151-2.1.SG6ES.bin'
-firmware_filter: 'c4500-.*'
 firmware_device: 'bootflash:'
+firmware_filter: 'c4500-.*'

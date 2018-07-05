@@ -7,9 +7,7 @@ Here are documentation related to development of emmgr and its driver modules
 
 # Overview
 
-Filsystem
-
-Base directory
+Filesystem
 
 | Directory              | Description               |
 | -----------------------| ------------------------- |

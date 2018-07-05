@@ -64,17 +64,20 @@ class BaseCLI(util.BaseCLI):
         raise ValueError("You must override the run() method")
 
 
-class CLI_configure(BaseCLI):
-    
+# ########################################################################
+# Generic
+# ########################################################################
+
+class CLI_reload(BaseCLI):
+
     def add_arguments(self):
-        self.parser.add_argument('-c', '--config',
-                                 required=True,
-                                 action="append",
-                                 help='New configuration',
-                                 )
+        self.parser.add_argument("-s", "--save_config",
+                                 action="store_true",
+                                 help='Save current config to startup config',
+                                 default=False)
 
     def run(self):
-        res =  self.mgr.configure(config_lines=self.args.config)
+        res = self.mgr.reload(save_config=self.args.save_config)
         print("Result :", res)
 
 
@@ -94,6 +97,24 @@ class CLI_run(BaseCLI):
                 print(line)
         else:
             print("No output")
+
+# ########################################################################
+# Configuration
+# ########################################################################
+
+class CLI_configure(BaseCLI):
+    
+    def add_arguments(self):
+        self.parser.add_argument('-c', '--config',
+                                 action="append",
+                                 required=True,
+                                 help='New configuration',
+                                 )
+
+    def run(self):
+        print("config", self.args.config)
+        res =  self.mgr.configure(config_lines=self.args.config)
+        print("Result :", res)
 
 
 class CLI_get_running_config(BaseCLI):
@@ -115,17 +136,16 @@ class CLI_save_running_config(BaseCLI):
         print("Result :", res)
 
 
-class CLI_reload(BaseCLI):
-
-    def add_arguments(self):
-        self.parser.add_argument("-s", "--save_config",
-                                 action="store_true",
-                                 help='Save current config to startup config',
-                                 default=False)
+class CLI_set_boot_config(BaseCLI):
 
     def run(self):
-        res = self.mgr.reload(save_config=self.args.save_config)
-        print("Result :", res)
+        print("Not implemented")
+        #res = self.mgr.save_running_config()
+        #print("Result :", res)
+
+# ########################################################################
+# Interface management
+# ########################################################################
 
 
 class CLI_interface_clear_config(BaseCLI):
@@ -140,6 +160,161 @@ class CLI_interface_clear_config(BaseCLI):
         print("Result :", res)
 
 
+class CLI_interface_get_admin_state(BaseCLI):
+
+    def add_arguments(self):
+        self.parser.add_argument("--interface",
+                                 help='Interface to clear',
+                                 )
+
+    def run(self):
+        res = self.mgr.interface_get_admin_state(interface=self.args.interface)
+        print("Result :", res)
+
+class CLI_interface_set_admin_state(BaseCLI):
+
+    def add_arguments(self):
+        self.parser.add_argument("-i", "--interface",
+                                 help='Interface to clear',
+                                 )
+        self.parser.add_argument("-s", "--state",
+                                 help='new state',
+                                 )
+
+    def run(self):
+        res = self.mgr.interface_set_admin_state(interface=self.args.interface,
+                                                 state=self.args.state)
+        print("Result :", res)
+
+# ########################################################################
+# Topology
+# ########################################################################
+
+class CLI_l2_neighbours(BaseCLI):
+
+    def run(self):
+        res = self.mgr.l2_neighbours()
+        print("Result :", res)
+
+
+# ########################################################################
+# VLAN management
+# ########################################################################
+
+class CLI_vlan_get(BaseCLI):
+
+    def run(self):
+        """
+        List all VLANs in the element
+        Returns a dict, key is vlan ID
+        """
+        vlans = self.mgr.vlan_get()
+        for vlan in vlans.values():
+             print("    %5d  %s" % (vlan.id, vlan.name))
+    
+
+class CLI_vlan_create(BaseCLI):
+
+    def add_arguments(self):
+        self.parser.add_argument("-v", "--vlan",
+                                 type=int,
+                                 )
+        self.parser.add_argument("-n", "--name",
+                                 default=None
+                                 )
+    def run(self):
+        """
+        Create a VLAN in the element
+        """
+        res = self.mgr.vlan_create(vlan=self.args.vlan,
+                                   name=self.args.name)
+        print("res", res)
+    
+class CLI_vlan_delete(BaseCLI):
+
+    def add_arguments(self):
+        self.parser.add_argument("-v", "--vlan",
+                                 type=int,
+                                 )
+
+    def run(self):
+        """
+        Delete a VLAN in the element
+        """
+        res = self.mgr.vlan_delete(vlan=self.args.vlan)
+        print("res", res)
+    
+
+class CLI_vlan_interface_get(BaseCLI):
+
+    def add_arguments(self):
+        self.parser.add_argument("--interface")
+
+    def run(self):
+        """
+        Get all VLANs on an interface
+        Returns a dict, key is vlan ID
+        """
+        vlans = self.mgr.vlan_interface_get(interface=self.args.interface)
+        for id, tagged in vlans.items():
+             print("    %5d  %s" % (id, tagged))
+        
+class CLI_vlan_interface_create(BaseCLI):
+
+    def add_arguments(self):
+        self.parser.add_argument("--interface")
+        self.parser.add_argument("-v", "--vlan",
+                                 type=int,
+                                 )
+        self.parser.add_argument("--untagged",
+                                 action="store_true",
+                                 default=False,
+                                 )
+
+    def run(self):
+        """
+        Create a VLAN to an interface
+        """
+        res = self.mgr.vlan_interface_create(interface=self.args.interface, 
+                                             vlan=self.args.vlan,
+                                             untagged=self.args.untagged)
+        print("res", res)                                        
+    
+class CLI_vlan_interface_delete(BaseCLI):
+
+    def add_arguments(self):
+        self.parser.add_argument("--interface")
+        self.parser.add_argument("--vlan",
+                                 type=int,
+                                 )
+    def run(self):
+        """
+        Delete a VLAN from an interface
+        """
+        res = self.mgr.vlan_interface_delete(interface=self.args.interface, 
+                                             vlan=self.args.vlan)
+        print("res", res)                                        
+    
+class CLI_vlan_interface_set_native(BaseCLI):
+
+    def add_arguments(self):
+        self.parser.add_argument("-i", "--interface")
+        self.parser.add_argument("-v", "--vlan",
+                                 type=int,
+                                 )
+
+    def run(self):
+        """
+        Set native VLAN on an Interface
+        """
+        raise ElementException("Not implemented")
+
+
+# ########################################################################
+# Software management
+# ########################################################################
+
+
 class CLI_sw_exist(BaseCLI):
     def add_arguments(self):
         self.parser.add_argument('-f', '--filename',
@@ -151,6 +326,12 @@ class CLI_sw_exist(BaseCLI):
         res = self.mgr.sw_exist(self.args.filename)
         print("Does firmware %s exist ? " % self.args.filename, res)
 
+
+class CLI_sw_get_boot(BaseCLI):
+
+    def run(self):
+        res = self.mgr.sw_get_boot()
+        print("System will boot with firmware:", res)
 
 class CLI_sw_list(BaseCLI):
 
@@ -178,7 +359,7 @@ class CLI_sw_copy_to(BaseCLI):
                                  help='Server to copy from/to',
                                  )
         self.parser.add_argument('--dest_filename',
-                                 required=True,
+                                 default=None,
                                  help='Destination filename',
                                  )
 
@@ -259,6 +440,28 @@ class CLI_sw_upgrade(BaseCLI):
 
     def callback(self, status):
         print("   ", status)
+
+
+class CLI_license_set(BaseCLI):
+    
+    def add_arguments(self):
+        self.parser.add_argument('--url',
+                                 required=True,
+                                 help='Where to fetch license, using curl',
+                                 )
+        self.parser.add_argument('--reload',
+                                 default=False,
+                                 action="store_true",
+                                 help='Reload when license is installed',
+                                 )
+
+    def run(self):
+        
+        try:
+            res =  self.mgr.license_set(url=self.args.url, reload=self.args.reload)
+            print("Result :", res)
+        except self.mgr.ElementException as err:
+            print(err)
 
 
 def main(MgrClass):

@@ -9,14 +9,14 @@ import re
 import emmgr.lib.log as log
 import emmgr.lib.comm as comm
 
-from emmgr.driver.basedriver import BaseDriver
+from emmgr.lib.basedriver import BaseDriver, ElementException
 
 
 class VRP_Manager(BaseDriver):
     
-    # ------------------------------------------------------------
-    # Generic methods
-    # ------------------------------------------------------------
+    # ########################################################################
+    # Generic
+    # ########################################################################
 
     def connect(self):
         """
@@ -74,6 +74,35 @@ class VRP_Manager(BaseDriver):
             self.transport.disconnect()
             self.transport = None
             
+    def reload(self, save_config=True, callback=None):
+        """
+        Reload the element. If running-config is unsaved, option to save it
+        status: Todo
+        """
+        self.connect()
+        log.debug("------------------- reload() -------------------")
+        if save_config:
+            self.save_running_config()
+        self.em.writeln("reboot")
+        self.em.expect("rebooting")
+        
+        # Force the connection closed
+        self.em = None
+        self.transport.disconnect()
+        self.transport = None
+
+    def run(self, cmd=None, filter_=None, timeout=None, callback=None):
+        self.connect()
+        log.debug("------------------- run() -------------------")
+        self.em.writeln(cmd)
+        self.wait_for_prompt()
+        output = self.em.before.split("\r\n")
+        return self.filter_(output, filter_)
+
+    # ########################################################################
+    # Configuration
+    # ########################################################################
+
     def wait_for_prompt(self, timeout=None):
         log.debug("------------------- wait_for_prompt() -------------------")
         match = self.em.expect(["\r\n<.*>", "\r\n\[.*\]"], timeout=timeout)
@@ -85,6 +114,7 @@ class VRP_Manager(BaseDriver):
         """
         self.connect()
         log.debug("------------------- configure() -------------------")
+        config_lines = self.str_to_lines(config_lines)
         self.em.writeln("system")
         match = self.wait_for_prompt()
         if match is None:
@@ -96,14 +126,6 @@ class VRP_Manager(BaseDriver):
         if save_running_config:
             self.save_running_config()
         return True
-
-    def run(self, cmd=None, filter_=None, timeout=None, callback=None):
-        self.connect()
-        log.debug("------------------- run() -------------------")
-        self.em.writeln(cmd)
-        self.wait_for_prompt()
-        output = self.em.before.split("\r\n")
-        return self.filter_(output, filter_)
 
     def get_running_config(self, filter_=None, refresh=False, callback=None):
         """
@@ -136,26 +158,90 @@ class VRP_Manager(BaseDriver):
         self.run("save")
         return True
         
-    def reload(self, save_config=True, callback=None):
+    def set_boot_config(self, config_lines=None, callback=None):
         """
-        Reload the element. If running-config is unsaved, option to save it
-        status: Todo
+        Set the startup_configuration to config_lines (list)
         """
-        self.connect()
-        log.debug("------------------- reload() -------------------")
-        if save_config:
-            self.save_running_config()
-        self.em.writeln("reboot")
-        self.em.expect("rebooting")
-        
-        # Force the connection closed
-        self.em = None
-        self.transport.disconnect()
-        self.transport = None
+        raise ElementException("Not implemented")
 
-    # ------------------------------------------------------------
+    # ########################################################################
+    # Interface management
+    # ########################################################################
+
+    def interface_clear_config(self, interface):
+        """
+        Default driver that resets a interface to its default configuration
+        This default driver is used if there is a CLI command for this.
+        """
+        raise ElementException("Not implemented")
+
+    def interface_get_admin_state(self, interface, enabled):
+        """
+        Default driver that enables/disables a interface
+        This default driver is used if there is a CLI command for this.
+        """
+        raise ElementException("Not implemented")
+        
+    def interface_set_admin_state(self, interface, enabled):
+        """
+        Default driver that enables/disables a interface
+        This default driver is used if there is a CLI command for this.
+        """
+        raise ElementException("Not implemented")
+        
+    # ########################################################################
+    # Topology
+    # ########################################################################
+
+    def l2_peers(self):
+        """
+        Returns the device L2 neighbours, using CDP, LLDP and similar protocols
+        """
+        raise ElementException("Not implemented")
+
+    # ########################################################################
+    # VLAN management
+    # ########################################################################
+
+    def vlan_list(self, vlan, name):
+        """
+        List all VLANs in the element
+        """
+        raise ElementException("Not implemented")
+    
+    def vlan_create(self, vlan, name):
+        """
+        Create a VLAN in the element
+        """
+        raise ElementException("Not implemented")
+    
+    def vlan_delete(self, vlan):
+        """
+        Delete a VLAN in the element
+        """
+        raise ElementException("Not implemented")
+    
+    def vlan_interface_create(self, interface, vlan, tagged=False):
+        """
+        Create a VLAN to an interface
+        """
+        raise ElementException("Not implemented")
+    
+    def vlan_interface_delete(self, interface, vlan):
+        """
+        Delete a VLAN from an interface
+        """
+        raise ElementException("Not implemented")
+    
+    def vlan_interface_set_native(self, interface, vlan):
+        """
+        Set native VLAN on an Interface
+        """
+        raise ElementException("Not implemented")
+     
+    # ########################################################################
     # Software management
-    # ------------------------------------------------------------
+    # ########################################################################
 
     def sw_list(self, filter_=None, callback=None):
         """

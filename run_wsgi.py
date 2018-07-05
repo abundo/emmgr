@@ -4,7 +4,9 @@
 Start a flask development server with full debug.
 """
 
-import sys, yaml
+import sys
+import yaml
+
 with open("/etc/emmgr/emmgr.yaml", "r") as f:
     try:
         config = yaml.load(f)

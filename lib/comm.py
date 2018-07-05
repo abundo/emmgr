@@ -53,7 +53,6 @@ class RemoteConnection:
         if self._method == "telnet":
             # os.write(self.fd, bytearray([255, 254, 1])) # IAC DONT ECHO
             # force character at a time
-            pass
             os.write(self.fd, b"\001")
             os.write(self.fd, b"mode character\n")
             os.write(self.fd, b"\001")

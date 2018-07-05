@@ -5,20 +5,20 @@ A driver to manage Cisco IOS and IOS-XE elements
 
 import sys
 import re
+from orderedattrdict import AttrDict
 
 import emmgr.lib.config as config
 import emmgr.lib.log as log
-import emmgr.lib.util as util
 import emmgr.lib.comm as comm
 
-from emmgr.driver.basedriver import BaseDriver
+from emmgr.lib.basedriver import BaseDriver, ElementException
 
 
 class IOS_Manager(BaseDriver):
     
-    # ------------------------------------------------------------
-    # Generic methods
-    # ------------------------------------------------------------
+    # ########################################################################
+    # Generic
+    # ########################################################################
 
     def connect(self):
         """
@@ -78,6 +78,50 @@ class IOS_Manager(BaseDriver):
             self.transport.disconnect()
             self.transport = None
             
+    def reload(self, save_config=True, callback=None):
+        """Reload the element. If running-config is unsaved, option to save it"""
+        self.connect()
+        self.em.writeln("reload")
+        
+        while True:
+            match = self.em.expect( {
+                    "confirm": "yes/no",
+                    "reloading": "confirm",
+                    "reloading1": "closed by remote host", 
+                    "reloading2": "closed by foreign host", 
+                    "reloading3": "Reload command.", 
+                    })
+            log.debug("Reload match: %s" % match)
+            if match == "reloading":
+                self.em.writeln("y")
+
+            elif match == "confirm":
+                # configuration is not saved, do so
+                if save_config:
+                    self.em.writeln("y")
+                else:
+                    self.em.writeln("n")
+            else:
+                break
+        
+        # Force the connection closed
+        self.em = None
+        self.transport.disconnect()
+        self.transport = None
+
+    def run(self, cmd=None, filter_=None, callback=None):
+        self.connect()
+        self.em.writeln(cmd)
+        self.wait_for_prompt()
+        output = self.em.before.split("\n")
+        if len(output) > 1:
+            output = output[1:]
+        return self.filter_(output, filter_)
+
+    # ########################################################################
+    # Configuration
+    # ########################################################################
+
     def wait_for_prompt(self):
         log.debug("------------------- wait_for_prompt() -------------------")
         match = self.em.expect("#")
@@ -87,6 +131,7 @@ class IOS_Manager(BaseDriver):
         """Reconfigure device"""
         self.connect()
         log.debug("------------------- configure() -------------------")
+        config_lines = self.str_to_lines(config_lines)
         self.em.writeln("configure terminal")
         match = self.em.expect(".*Z\.")
         if match is None:
@@ -98,13 +143,6 @@ class IOS_Manager(BaseDriver):
         if save_running_config:
             self.save_running_config()
         return True
-
-    def run(self, cmd=None, filter_=None, callback=None):
-        self.connect()
-        self.em.writeln(cmd)
-        self.wait_for_prompt()
-        output = self.em.before.split("\n")
-        return self.filter_(output, filter_)
 
     def get_running_config(self, filter_=None, refresh=False, callback=None):
         """
@@ -140,41 +178,207 @@ class IOS_Manager(BaseDriver):
         self.wait_for_prompt()
         return True
         
-    def reload(self, save_config=True, callback=None):
-        """Reload the element. If running-config is unsaved, option to save it"""
-        self.connect()
-        self.em.writeln("reload")
-        
-        while True:
-            match = self.em.expect( {
-                    "confirm": "yes/no",
-                    "reloading": "confirm",
-                    "reloading1": "closed by remote host", 
-                    "reloading2": "closed by foreign host", 
-                    "reloading3": "Reload command.", 
-                    })
-            log.debug("Reload match: %s" % match)
-            if match == "reloading":
-                self.em.writeln("y")
+    def set_boot_config(self, config_lines=None, callback=None):
+        """
+        Set the startup_configuration to config_lines (list)
+        """
+        raise ElementException("Not implemented")
 
-            elif match == "confirm":
-                # configuration is not saved, do so
-                if save_config:
-                    self.em.writeln("y")
-                else:
-                    self.em.writeln("n")
+    # ########################################################################
+    # Interface management
+    # ########################################################################
+
+    def interface_clear_config(self, interface):
+        """
+        Default driver that resets a interface to its default configuration
+        This default driver is used if there is a CLI command for this.
+        """
+        raise ElementException("Not implemented")
+
+    def interface_get_admin_state(self, interface, enabled):
+        """
+        Default driver that enables/disables a interface
+        This default driver is used if there is a CLI command for this.
+        """
+        raise ElementException("Not implemented")
+        
+    def interface_set_admin_state(self, interface, enabled):
+        """
+        Default driver that enables/disables a interface
+        This default driver is used if there is a CLI command for this.
+        """
+        raise ElementException("Not implemented")
+
+    # ########################################################################
+    # Topology
+    # ########################################################################
+
+    class Peer:
+        def __init__(self, hostname=None, 
+                    ipaddr_mgmt=None,
+                    local_if=None, 
+                    remote_if=None, 
+                    remote_platform=None):
+            self.hostname = hostname
+            self.ipaddr_mgmt = ipaddr_mgmt
+            self.local_if = local_if
+            self.remote_if = remote_if
+            self.remote_platform = remote_platform
+
+    def add_peer(self, peers, peer):
+        if peer is None:
+            return
+        if peer.local_if:
+            key = peer.local_if
+        else:
+            key = peer.hostname
+        peers[key] = peer
+
+    def l2_peers(self):
+        """
+        Returns the device L2 neighbours, using CDP, LLDP and similar protocols
+        """
+
+        lines = self.run(cmd='show cdp neighbors detail')
+        peers = {}
+        peer = None
+        for line in lines:
+            if line.startswith('Device ID'):
+                self.add_peer(peers, peer)
+                tmp = line.split()
+                peer = self.Peer(hostname=tmp[2])
+                state = 2
             else:
-                break
-        
-        # Force the connection closed
-        self.em = None
-        self.transport.disconnect()
-        self.transport = None
+                if peer:
+                    tmp = line.lower().split()
+                    # print("tmp", tmp)
+                    if len(tmp) < 1:
+                        continue
+                    if tmp[0] == 'platform:':
+                        peer.remote_platform = tmp[2]
+                    elif tmp[0] == 'interface:':
+                        peer.local_if = tmp[1].replace(",", "")
+                        peer.remote_if = tmp[6]
+                    elif tmp[0] == 'ip' and tmp[1] == 'address:':
+                        peer.ipaddr_mgmt = tmp[2]
+        self.add_peer(peers, peer)
 
-    # ------------------------------------------------------------
+        keys = sorted(peers.keys())
+        tmp = []
+        for key in keys:
+            tmp.append(peers[key])
+        return tmp
+
+    # ########################################################################
+    # VLAN management
+    # ########################################################################
+
+    class VLAN:
+        def __init__(self,
+                     id=None,
+                     name=None,
+                     tagged=True):
+            self.id = id
+            self.name = name
+            self.tagged = tagged
+
+        def __str__(self):
+            return "VLAN(id=%s, tagged=%s, name=%s)" % (self.id, self.tagged, self.name)
+
+    def vlan_get(self):
+        """
+        List all VLANs in the element
+        Returns a dict, key is vlan ID
+        """
+        res = AttrDict()
+        cmd = "show vlan brief"
+        lines = self.run(cmd)
+        for line in lines:
+            tmp = line.split(None, 2)
+            # print(tmp)
+            if len(tmp) > 2:
+                try:
+                    vlan = int(tmp[0])
+                    name = tmp[1]
+                    res[vlan] = self.VLAN(id=vlan, name=name, tagged=None)
+                except ValueError:
+                    pass
+        return res
+    
+    def vlan_create(self, vlan, name):
+        """
+        Create a VLAN in the element
+        """
+        raise ElementException("Not implemented")
+    
+    def vlan_delete(self, vlan):
+        """
+        Delete a VLAN in the element
+        """
+        raise ElementException("Not implemented")
+    
+    def vlan_interface_get(self, interface=None):
+        """
+        Get all VLANs on an interface
+        Returns a dict, key is vlan ID
+        """
+        vlans = AttrDict()
+        untagged_vlan = None
+        cmd = "show running-config interface %s" % interface
+        lines = self.run(cmd)
+        for line in lines:
+            line = line.strip()
+            # print("line", line)
+            if line.startswith("switchport trunk allowed vlan "):
+                tmp = line[30:]
+                if tmp.startswith("add "):
+                    tmp = tmp[4:]
+                for t1 in tmp.split(","):
+                    t2 = t1.split("-")
+                    vid1 = int(t2[0])
+                    if len(t2) > 1:
+                        vid2 = int(t2[1])
+                        for t3 in range(vid1, vid2+1):
+                            vlans[t3] = self.VLAN(id=t3)
+                    else:
+                        vlans[vid1] = self.VLAN(id=vid1)
+            elif line.startswith("switchport trunk native vlan "):
+                untagged_vlan = int(line[29:].strip())
+        if untagged_vlan:
+            if untagged_vlan in vlans:
+                vlans[untagged_vlan].tagged = False
+            else:
+                vlans[untagged_vlan] = self.VLAN(id=untagged_vlan, tagged=False)
+        return vlans
+
+    def vlan_interface_create(self, interface, vlan, tagged=True):
+        """
+        Create a VLAN to an interface
+        """
+        cmd = ["interface %s" % interface]
+        cmd.append("switchport trunk allowed vlan add %s" % vlan)
+        if not tagged:
+            cmd.append("switchport trunk native vlan %s" % vlan)
+        self.configure(cmd, save_running_config=True)
+    
+    def vlan_interface_delete(self, interface, vlan):
+        """
+        Delete a VLAN from an interface
+        """
+        cmd = ["interface %s" % interface]
+        cmd.append("switchport trunk allowed vlan remove %s" % vlan)
+        self.configure(cmd, save_running_config=True)
+    
+    def vlan_interface_set_native(self, interface, vlan):
+        """
+        Set native VLAN on an Interface
+        """
+        raise ElementException("Not implemented")
+
+    # ########################################################################
     # Software management
-    # ------------------------------------------------------------
-
+    # ########################################################################
+    
     def sw_list(self, filter_=None, callback=None):
         """
         Get a list of all firmware in the element
@@ -188,6 +392,8 @@ class IOS_Manager(BaseDriver):
 
         # lets parse names, we ignore a bunch of names and directories
         sw_list = []
+        if filter_ is None:
+            filter_ = self.s("firmware_filter")
         if filter_:
             r = re.compile(filter_)
         for line in msg.split("\r\n"):
@@ -206,7 +412,9 @@ class IOS_Manager(BaseDriver):
         return sw_list
 
     def sw_copy_to(self, mgr=None, filename=None, dest_filename="bootflash:", callback=None):
-        """Copy software to the element"""
+        """
+        Copy software to the element
+        """
         
         if callback:
             callback("Copy file %s to element" % (filename))
@@ -258,14 +466,18 @@ class IOS_Manager(BaseDriver):
 
     
     def sw_copy_from(self, mgr=None, filename=None, callback=None):
-        """Copy software from the element"""
+        """
+        Copy software from the element
+        """
         raise comm.CommException(1, "Not implemented")
         self.connect()
         if not self.sw_exist(filename):
             raise comm.CommException(1, "File %s does not exist on element" % filename)
 
     def sw_delete(self, filename, callback=None):
-        """Delete filename from flash"""
+        """
+        Delete filename from element
+        """
         self.connect()
         if not self.sw_exist(filename):
             raise comm.CommException(1, "File %s not found in flash" % filename)

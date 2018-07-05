@@ -13,6 +13,7 @@ import yaml
 import socket
 from orderedattrdict import AttrDict
 
+from emmgr.lib.basedriver import BaseDriver
 import emmgr.lib.config as config
 import emmgr.lib.log as log
 import emmgr.lib.util as util
@@ -22,14 +23,12 @@ import emmgr.lib.comm as comm
 driverDir   = "/opt/emmgr/driver"   # todo, config
 
 
-class ElementException(Exception):
-    pass
-
-
 class Element:
     """
-    Manage one element
+    Manage one element. This is a stub that loads the real driver
     """
+
+    ElementException = BaseDriver.ElementException  # for easy access
 
     @classmethod
     def get_models(cls):
@@ -40,121 +39,68 @@ class Element:
             if model[0] != "_" and os.path.isdir(driverDir + os.sep + model):
                 res.append(model)
         return res
-        
-    def __init__(self, hostname=None, ipaddr_mgmt=None, model=None):
+
+    def __init__(self, hostname=None, ipaddr_mgmt=None, model=None, use_ssh=None):
         self.hostname    = hostname
         self.ipaddr_mgmt = ipaddr_mgmt
         self.model       = model
-
+        self.use_ssh     = use_ssh
+        self._settings   = []
+ 
         if self.model is None:
-            raise ElementException("Element model must be specified")
+            raise self.ElementException("Element model must be specified")
         
-        # Load defaults from element config file
-        def_file = "%s/%s/%s-def.yaml" % (driverDir, model, model)
-        try:
-            self.default_data = util.yaml_load(def_file)
-        except yaml.YAMLError as err:
-            raise ElementException("Cannot load element configuration %s, err: %s" % (def_file, err))
-
         if self.ipaddr_mgmt is None:
             # Find out management IP address through DNS
             addr = socket.gethostbyname(self.hostname)
             self.ipaddr_mgmt = addr
-                
+
+        self._load_def()
+
         # load the element driver for the element model
-        driver_file = driverDir + "/%s.py" % self.default_data.driver
+        driver_file = driverDir + "/%s.py" % self._settings[-1].driver
         if not os.path.exists(driver_file):
-            raise ElementException("Missing element driver %s" % driver_file)
+            raise self.ElementException("Missing element driver %s" % driver_file)
         self._drivermodule = util.import_file(driver_file)
 
         driver_args = config.em.scriptaccount
         driver_args.hostname = self.ipaddr_mgmt
+        driver_args.settings = self._settings
+        if use_ssh is not None:
+            driver_args.use_ssh = self.use_ssh
         
         # Create instance of driver
         self._driver = self._drivermodule.Driver(**driver_args)
 
+    def _load_def(self):
+        """
+        Load definitions for the element
+        This can be done recursively
+        """
+        loaded_models = {}
+        model = self.model
+        # Load configuration for the element
+        while True:
+            def_file = "%s/%s/%s-def.yaml" % (driverDir, model, model)
+            try:
+                loaded_models[model] = 1
+                data = util.yaml_load(def_file)
+                self._settings.append(data)
+                if 'driver' not in data:
+                    return
+                model = os.path.dirname(data.driver)
+                if model in loaded_models:
+                    return
+            except yaml.YAMLError as err:
+                raise self.ElementException("Cannot load element configuration %s, err: %s" % (def_file, err))
 
-    # ########################################################################
-    # Generic
-    # ########################################################################
+    def __getattr__(self, attr):
+        return getattr(self._driver, attr)
 
-    def configure(self, config_lines=None, save_running_config=False):
-        if not isinstance(config_lines, list):
-            config_lines = [config_lines]
-        return self._driver.configure(config_lines, save_running_config)
 
-    def run(self, cmd=None, filter_=None, callback=None):
-        return self._driver.run(cmd=cmd, filter_=filter_, callback=callback)
-
-    def get_running_config(self, filter_=None, refresh=False, callback=None):
-        return self._driver.get_running_config(filter_=filter_, refresh=refresh, callback=callback)
-
-    def save_running_config(self, callback=None):
-        return self._driver.save_running_config(callback=callback)
-
-    def reload(self, save_config=True):
-        self._driver.reload(save_config=save_config)
-
-    # ########################################################################
-    # Interface management
-    # ########################################################################
-
-    def interface_get_admin_state(self, interface):
-        return self._driver.interface_get_admin_state(interface)
-
-    def interface_set_admin_state(self, interface, enabled):
-        self._driver.interface_set_admin_state(interface, enabled)
-
-    def interface_clear_config(self, interface):
-        self._driver.interface_clear_config(interface)
-
-    # ########################################################################
-    # VLAN management
-    # ########################################################################
-
-    def vlan_create(self, vlan, name):
-        pass
-    
-    def vlan_delete(self, vlan):
-        pass
-    
-    def vlan_interface_add(self, interface, vlan, tagged=False):
-        pass
-    
-    def vlan_interface_delete(self, interface, vlan):
-        pass
-    
-    def vlan_interface_set_native(self, interface, vlan):
-        pass
-
-     
-    # ########################################################################
-    # Software management
-    # ########################################################################
-    
-    def sw_list(self, filter_=None, callback=None):
-        if filter_ is None:
-            filter_ = self.default_data.firmware_filter
-        return self._driver.sw_list(filter_=filter_, callback=callback)
-
-    def sw_copy_to(self, mgr=None, filename=None, dest_filename=None, callback=None):
-        return self._driver.sw_copy_to(mgr=mgr, filename=filename, dest_filename=dest_filename, callback=callback)
-
-    def sw_copy_from(self, mgr=None, filename=None, callback=None):
-        return self._driver.sw_copy_from(mgr=mgr, filename=filename, callback=callback)
-
-    def sw_delete(self, filename, callback=None):
-        return self._driver.sw_delete(filename=filename, callback=callback)
-
-    def sw_delete_unneeded(self, callback=None):
-        return self._driver.sw_delete_unneeded(callback=callback)
-
-    def sw_set_boot(self, filename, callback=None):
-        return self._driver.sw_set_boot(filename, callback=callback)
-
-    def sw_upgrade(self, mgr=None, filename=None, setboot=True, callback=None):
-        return self._driver.sw_upgrade(mgr=mgr, filename=filename, setboot=setboot, callback=callback)
-
+# ########################################################################
+#   CLI
+# ########################################################################
 
 class BaseCLI(util.BaseCLI):
     
@@ -217,7 +163,7 @@ class CLI_configure(BaseCLI):
                                  )
 
     def run(self):
-        print(self.args.config)
+        print("config", self.args.config)
         res =  self.em.configure(config_lines=self.args.config)
         print("Result :", res)
 
@@ -243,7 +189,6 @@ class CLI_get_running_config(BaseCLI):
 
     def run(self):
         lines = self.em.get_running_config()
-        print("Running configuration:")
         if lines:
             for line in lines:
                 print(line)
@@ -292,9 +237,140 @@ class CLI_sw_exist(BaseCLI):
 
     def run(self):
         res = self.em.sw_exist(self.args.filename)
-        print("Does firmware %s exist ? " % self.args.filename, res)
+        print(res)
 
 
+# ########################################################################
+# Topology
+# ########################################################################
+
+class CLI_l2_peers(BaseCLI):
+
+    def run(self):
+        peers = self.em.l2_peers()
+        f="%-25s %-20s %-20s %s"
+        print(f % ("Hostname", "Local iterface", "remote interface", "remote platform"))
+        print(f % ("--------------", "--------------", "----------------", "---------------------"))
+        for peer in peers:
+            print(f % (peer.hostname, peer.local_if, peer.remote_if, peer.remote_platform))
+
+# ########################################################################
+# VLAN management
+# ########################################################################
+
+
+class CLI_vlan_get(BaseCLI):
+
+    def run(self):
+        """
+        List all VLANs in the element
+        Returns a dict, key is vlan ID
+        """
+        vlans = self.em.vlan_get()
+        for vlan in vlans.values():
+            print("    %5d  %s" % (vlan.id, vlan.name))
+    
+
+class CLI_vlan_create(BaseCLI):
+
+    def add_arguments(self):
+        self.parser.add_argument("-v", "--vlan",
+                                 type=int,
+                                 )
+        self.parser.add_argument("-n", "--name",
+                                 default=None
+                                 )
+    def run(self):
+        """
+        Create a VLAN in the element
+        """
+        res = self.em.vlan_create(vlan=self.args.vlan,
+                                   name=self.args.name)
+        print("res", res)
+    
+class CLI_vlan_delete(BaseCLI):
+
+    def add_arguments(self):
+        self.parser.add_argument("-v", "--vlan",
+                                 type=int,
+                                 )
+
+    def run(self):
+        """
+        Delete a VLAN in the element
+        """
+        res = self.em.vlan_delete(vlan=self.args.vlan)
+        print("res", res)
+    
+
+class CLI_vlan_interface_get(BaseCLI):
+
+    def add_arguments(self):
+        self.parser.add_argument("--interface")
+
+    def run(self):
+        """
+        Get all VLANs on an interface
+        Returns a dict, key is vlan ID
+        """
+        vlans = self.em.vlan_interface_get(interface=self.args.interface)
+        for vlan in vlans.values():
+             print("    %5d  %s" % (vlan.id, vlan.tagged))
+        
+class CLI_vlan_interface_create(BaseCLI):
+
+    def add_arguments(self):
+        self.parser.add_argument("--interface")
+        self.parser.add_argument("-v", "--vlan",
+                                 type=int,
+                                 )
+        self.parser.add_argument("--tagged",
+                                 action="store_false",
+                                 default=True,
+                                 )
+
+    def run(self):
+        """
+        Create a VLAN to an interface
+        """
+        res = self.em.vlan_interface_create(interface=self.args.interface, 
+                                             vlan=self.args.vlan,
+                                             tagged=self.args.tagged)
+        print("res", res)                                        
+    
+class CLI_vlan_interface_delete(BaseCLI):
+
+    def add_arguments(self):
+        self.parser.add_argument("--interface")
+        self.parser.add_argument("--vlan",
+                                 type=int,
+                                 )
+    def run(self):
+        """
+        Delete a VLAN from an interface
+        """
+        res = self.em.vlan_interface_delete(interface=self.args.interface, 
+                                            vlan=self.args.vlan)
+        print("res", res)                                        
+    
+class CLI_vlan_interface_set_native(BaseCLI):
+
+    def add_arguments(self):
+        self.parser.add_argument("-i", "--interface")
+        self.parser.add_argument("-v", "--vlan",
+                                 type=int,
+                                 )
+
+    def run(self):
+        """
+        Set native VLAN on an Interface
+        """
+        raise ElementException("Not implemented")
+
+# ########################################################################
+# Software management
+# ########################################################################
+    
 class CLI_sw_list(BaseCLI):
 
     def add_arguments(self):
@@ -304,7 +380,6 @@ class CLI_sw_list(BaseCLI):
 
     def run(self):
         sw_list = self.em.sw_list(filter_=self.args.filter)
-        print("Softare on element:")
         for sw in sw_list:
             print("   ", sw)
 
@@ -404,6 +479,28 @@ class CLI_sw_upgrade(BaseCLI):
 
     def callback(self, status):
         print("   ", status)
+
+
+class CLI_license_set(BaseCLI):
+    
+    def add_arguments(self):
+        self.parser.add_argument('--url',
+                                 required=True,
+                                 help='URL to license file storage',
+                                 )
+        self.parser.add_argument('--reload',
+                                 default=False,
+                                 action="store_true",
+                                 help='Reload when license is installed',
+                                 )
+
+    def run(self):
+        
+        try:
+            res =  self.em.license_set(url=self.args.url, reload=self.args.reload)
+            print("Result :", res)
+        except self.em.ElementException as err:
+            print(err)
 
 
 def main():
