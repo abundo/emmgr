@@ -45,7 +45,7 @@ class Element:
         self.ipaddr_mgmt = ipaddr_mgmt
         self.model       = model
         self.use_ssh     = use_ssh
-        self._settings   = []
+        self._settings   = []           # List of settings, from yaml files
  
         if self.model is None:
             raise self.ElementException("Element model must be specified")
@@ -55,7 +55,7 @@ class Element:
             addr = socket.gethostbyname(self.hostname)
             self.ipaddr_mgmt = addr
 
-        self._load_def()
+        self._load_settings()
 
         # load the element driver for the element model
         driver_file = driverDir + "/%s.py" % self._settings[-1].driver
@@ -72,10 +72,10 @@ class Element:
         # Create instance of driver
         self._driver = self._drivermodule.Driver(**driver_args)
 
-    def _load_def(self):
+    def _load_settings(self):
         """
         Load definitions for the element
-        This can be done recursively
+        This can be done recursively, for example a specific model can point to a generic one
         """
         loaded_models = {}
         model = self.model
@@ -95,6 +95,7 @@ class Element:
                 raise self.ElementException("Cannot load element configuration %s, err: %s" % (def_file, err))
 
     def __getattr__(self, attr):
+        """Bridge to the driver specific code"""
         return getattr(self._driver, attr)
 
 
