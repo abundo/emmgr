@@ -4,6 +4,7 @@ firmware_device: 'flash:'
 firmware_filter: ''
 
 config:
+  wait_for_prompt: "#"
   interface:
     enable:
       cmd:

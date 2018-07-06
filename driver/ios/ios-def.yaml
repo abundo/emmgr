@@ -3,6 +3,7 @@ driver: ios/ios_mgr
 firmware_device: 'flash:'
 
 config:
+  wait_for_prompt: "#"
   interface:
     enable:
       cmd:

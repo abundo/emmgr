@@ -5,8 +5,12 @@ Implements common functionality
 
 import re
 
+import emmgr.lib.log as log
+
 class ElementException(Exception):
     pass
+
+dummy = object()
 
 
 class BaseDriver:
@@ -32,19 +36,25 @@ class BaseDriver:
         self.transport = None
         self.em = None
         self.running_config = None
+        
+        self._wait_for_prompt = self.get_setting("config.wait_for_prompt", None)    # cache for performance
 
 
-    def s(self, attr, default=None):
+    def get_setting(self, attr, default=dummy):
         """
         Walk through each yaml file until we find the attribute
+        Attributes can be specified hierarchical with dot as separator
         """
+        attr = attr.split(".")
         for f in self.settings:
             try:
-                if hasattr(f, attr):
-                    return getattr(f, attr)
-            except KeyError:
-                print("KeyError")
+                for a in attr:
+                    f = getattr(f, a)
+                return f
+            except (KeyError, AttributeError):
                 pass
+        if default is not dummy:
+            return default
         raise KeyError("Unknown attribute %s" % attr)
 
 
@@ -93,9 +103,10 @@ class BaseDriver:
     # ########################################################################
 
     def wait_for_prompt(self):
-        # todo, wait for should be in config file
         log.debug("------------------- wait_for_prompt() -------------------")
-        match = self.em.expect("#")
+        if not self._wait_for_prompt:
+            raise ElementException("Not implemented")
+        match = self.em.expect(self._wait_for_prompt)
         return match
 
     def configure(self, config_lines=None, save_running_config=False):

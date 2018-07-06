@@ -4,6 +4,8 @@ firmware_device: 'flash:'
 firmware_filter: 'bz2$'
 
 config:
+  wait_for_prompt: "#"
+  
   interface:
     enable:
       cmd:
