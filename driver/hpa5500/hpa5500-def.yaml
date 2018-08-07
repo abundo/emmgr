@@ -1,4 +1,4 @@
 ---
 driver: ????
-  
+firmware_device: 'flash:'
 firmware_filter: 'hpa5500-.*'
