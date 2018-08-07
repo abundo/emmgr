@@ -27,7 +27,7 @@ class BaseCLI(util.BaseCLI):
     def add_arguments(self):
         self.parser.add_argument('-H', '--hostname',
                                  help='Hostname of element')
-        self.parser.add_argument('-i', '--ip',
+        self.parser.add_argument('-i', '--ipaddr_mgmt',
                                  help='Management IP address of element')
         self.parser.add_argument('-m', '--model',
                                  required=True,
@@ -53,6 +53,8 @@ class BaseCLI(util.BaseCLI):
 
     def run(self):
         if self.args.hostname is None and self.args.ip is None:
+            util.die('Error: You need to specify -H/--hostname or -i/--ipaddr_mgmt')
+
         log.setLevel(self.args.loglevel)
         self.mgr = self.mgr_cls(**vars(self.args))
 
