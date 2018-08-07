@@ -393,7 +393,7 @@ class IOS_Manager(BaseDriver):
         # lets parse names, we ignore a bunch of names and directories
         sw_list = []
         if filter_ is None:
-            filter_ = self.s("firmware_filter")
+            filter_ = self.get_definition("firmware_filter")
         if filter_:
             r = re.compile(filter_)
         for line in msg.split("\r\n"):

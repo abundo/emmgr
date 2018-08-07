@@ -492,7 +492,7 @@ class IBOS_Manager(BaseDriver):
         Get a list of all firmware in the element
         """
         if filter_ is None:
-            filter_ = self.s("firmware_filter")
+            filter_ = self.get_definition("firmware_filter")
         return self.file_list(filter_=filter_)
 
     def sw_copy_to(self, mgr=None, filename=None, dest_filename=None, callback=None):
