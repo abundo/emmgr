@@ -16,6 +16,11 @@ from emmgr.lib.basedriver import BaseDriver, ElementException
 
 class IOS_Manager(BaseDriver):
     
+    def __init__(self, **kwargs):
+        if not hasattr(self, 'model'):
+            self.model = "ios"
+        super().__init__(**kwargs)
+    
     # ########################################################################
     # Generic
     # ########################################################################
@@ -591,5 +596,6 @@ class IOS_Manager(BaseDriver):
 Driver = IOS_Manager
 
 if __name__ == '__main__':
+    sys.argv.append("-m ios")
     import emmgr.driver.cli as cli
     cli.main(IOS_Manager)

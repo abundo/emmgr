@@ -122,17 +122,17 @@ class BaseCLI:
         raise ValueError("You must override the run() method")
 
 
-class MyCLI:
+class Execute_CLI:
     """
-    Helper class, to construct a CLI
+    Walk through a module, extract all CLIs and run one of them
     """
-    def __init__(self, name, **kwargs):
-        # get all CLI modules
+    def __init__(self, module_name=None, **kwargs):
+        # get all CLI definitions
         self.cmds = AttrDict()
-        current_module = sys.modules[name]
-        for key in dir(current_module):
+        cli_module = sys.modules[module_name]
+        for key in dir(cli_module):
             if key.startswith("CLI_"):
-                cls = getattr(current_module, key)
+                cls = getattr(cli_module, key)
                 self.cmds[key[4:]] = cls
     
         # get first arg, use as command

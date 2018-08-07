@@ -14,6 +14,11 @@ from emmgr.lib.basedriver import BaseDriver, ElementException
 
 class VRP_Manager(BaseDriver):
     
+    def __init__(self, **kwargs):
+        if not hasattr(self, 'model'):
+            self.model = "vrp"
+        super().__init__(**kwargs)
+
     # ########################################################################
     # Generic
     # ########################################################################
@@ -474,5 +479,6 @@ Driver = VRP_Manager
 
 
 if __name__ == '__main__':
+    sys.argv.append("-m vrp")
     import emmgr.driver.cli as cli
     cli.main(VRP_Manager)

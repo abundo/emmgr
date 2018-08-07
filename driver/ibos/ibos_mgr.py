@@ -15,6 +15,11 @@ from emmgr.lib.basedriver import BaseDriver, ElementException
 
 class IBOS_Manager(BaseDriver):
     
+    def __init__(self, **kwargs):
+        if not hasattr(self, 'model'):
+            self.model = "ibos"
+        super().__init__(**kwargs)
+
     # ########################################################################
     # Generic
     # ########################################################################
@@ -623,5 +628,6 @@ class IBOS_Manager(BaseDriver):
 Driver = IBOS_Manager
 
 if __name__ == '__main__':
-    import emmgr.lib.cli as cli
-    cli.main(IBOS_Manager)
+    sys.argv.append("-m ibos")
+    import emmgr.lib.cli
+    emmgr.lib.cli.main(Driver)

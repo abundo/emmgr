@@ -14,6 +14,11 @@ from emmgr.lib.basedriver import BaseDriver, ElementException
 
 class ZXROS_Manager(BaseDriver):
     
+    def __init__(self, **kwargs):
+        if not hasattr(self, 'model'):
+            self.model = "zxros"
+        super().__init__(**kwargs)
+    
     # ########################################################################
     # Generic
     # ########################################################################
@@ -473,5 +478,6 @@ Driver = ZXROS_Manager
 
 
 if __name__ == '__main__':
+    sys.argv.append("-m zxros")
     import emmgr.driver.cli as cli
     cli.main(Driver)
