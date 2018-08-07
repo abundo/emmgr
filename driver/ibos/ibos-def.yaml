@@ -17,11 +17,10 @@ config:
          interface {{ interface_name }}
            shutdown
 
+    # iBOS does not have a clear_config command, implemented in driver
     # clear_config:
     #   cmd:
     #   - "default interface {{ interface_name }}"
 
     enable_ssh:
-      cmd:
-      - 'crypto key generate rsa general-keys modulus 1024'
-      - 'ip ssh version 2'
+      cmd: ''
