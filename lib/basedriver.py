@@ -127,7 +127,7 @@ class BaseDriver:
         """
         raise ElementException("Not implemented")
 
-    def set_boot_config(self, config_lines=None, callback=None):
+    def set_startup_config(self, config_lines=None, callback=None):
         """
         Set the startup_configuration to config_lines (list)
         """

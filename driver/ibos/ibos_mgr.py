@@ -224,7 +224,7 @@ class IBOS_Manager(BaseDriver):
         self.run("copy running-config startup-config")
         return True
 
-    def set_boot_config(self, config_lines=None, callback=None):
+    def set_startup_config(self, config_lines=None, callback=None):
         """
         Copy config_lines to startup_config
         """

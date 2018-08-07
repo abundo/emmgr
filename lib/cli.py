@@ -136,7 +136,7 @@ class CLI_save_running_config(BaseCLI):
         print("Result :", res)
 
 
-class CLI_set_boot_config(BaseCLI):
+class CLI_set_startup_config(BaseCLI):
 
     def run(self):
         print("Not implemented")

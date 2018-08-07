@@ -81,8 +81,9 @@ def save_running_config(hostname, model):
     except element.ElementException as err:
         return "%s" % err, 404
 
-# def set_boot_config(self, config_lines=None, callback=None):
 
+def set_startup_config(self, config_lines=None, callback=None):
+    return "Error: not implemented", 404
 
 # ########################################################################
 # Interface management
