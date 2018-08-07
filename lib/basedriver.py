@@ -3,14 +3,19 @@ Base driver for em drivers
 Implements common functionality
 """
 
+import os
 import re
+import yaml
 
+import emmgr.lib.config as config
 import emmgr.lib.log as log
+import emmgr.lib.util as util
+
+dummy = object()        # Used to differentiate between dummy and None
+
 
 class ElementException(Exception):
     pass
-
-dummy = object()
 
 
 class BaseDriver:
@@ -20,42 +25,79 @@ class BaseDriver:
 
     ElementException = ElementException
 
-    def __init__(self, hostname=None,
+    def __init__(self,
+                 hostname=None,
+                 ipaddr_mgmt=None,
                  port=None,
+                 model=None,
                  username=None,
                  password=None,
                  enable_password=None,
                  use_ssh=True,
-                 settings=None,
+                 definitions=None,
+                 **kwargs                   # Ignore any additional parameters
                  ):
         self.hostname = hostname
         self.port = port
+        self.ipaddr_mgmt = ipaddr_mgmt
+
         self.username = username
         self.password = password
         self.enable_password = enable_password
         self.use_ssh = use_ssh    # If true use ssh instead of telnet
-        self.settings = settings
 
+        if self.ipaddr_mgmt:
+            self.hostname = self.ipaddr_mgmt
+
+        # ----
         self.transport = None
         self.em = None
         self.running_config = None
         
-        self._wait_for_prompt = self.get_setting("config.wait_for_prompt", None)    # cache for performance
+        if definitions == None:
+            self._definitions = self.load_definitions(self.model)
+        else:
+            self._definitions = definitions
 
+        self._wait_for_prompt = self.get_definition("config.wait_for_prompt", None)    # cache for performance
 
-    def get_setting(self, attr, default=dummy):
+    @classmethod
+    def load_definitions(cls, model=None):
         """
-        Walk through each yaml file until we find the attribute
-        Attributes can be specified hierarchical with dot as separator
+        Load definitions for the element
+        This can be done recursively, for example a specific model can point to a generic one
         """
-        attr = attr.split(".")
-        for f in self.settings:
+        definitions = []
+        loaded_models = {}      # Track loaded models so we dont load each more than once
+        while True:
+            def_file = "%s/%s/%s-def.yaml" % (config.driver_dir, model, model)
             try:
-                for a in attr:
-                    f = getattr(f, a)
-                return f
-            except (KeyError, AttributeError):
-                pass
+                loaded_models[model] = True
+                data = util.yaml_load(def_file)
+                definitions.append(data)
+                if 'driver' not in data:
+                    break
+                model = os.path.dirname(data.driver)
+                if model in loaded_models:
+                    break
+            except yaml.YAMLError as err:
+                raise ElementException("Cannot load element configuration %s, err: %s" % (def_file, err))
+        return definitions
+
+    def get_definition(self, attr, default=dummy):
+        """
+        Walk through each yaml file until we find the specified attribute
+        Attributes can be specified hierarchically with dot as separator
+        """
+        if self._definitions is not None:
+            attr = attr.split(".")
+            for f in self._definitions:
+                try:
+                    for a in attr:
+                        f = getattr(f, a)
+                    return f
+                except (KeyError, AttributeError):
+                    pass
         if default is not dummy:
             return default
         raise KeyError("Unknown attribute %s" % attr)
@@ -160,6 +202,7 @@ class BaseDriver:
         Default driver that resets a interface to its default configuration
         This default driver is used if there is a CLI command for this.
         """
+        cmd = self.get_definition("config.interface.clear_config")
         raise ElementException("Not implemented")
 
     def interface_get_admin_state(self, interface, enabled):
@@ -175,6 +218,15 @@ class BaseDriver:
         This default driver is used if there is a CLI command for this.
         """
         raise ElementException("Not implemented")
+        try:
+            if enabled:
+                attr = self.get_definition("config.interface.enable")
+            else:
+                attr = self.get_definition("config.interface.disable")
+            # Render config to apply
+        except KeyError:
+            raise ElementException("Not implemented")
+        
         
     # ########################################################################
     # Topology
