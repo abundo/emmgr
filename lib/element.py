@@ -27,8 +27,6 @@ class Element:
     Manage one element. This is a stub that loads the real driver
     """
 
-    ElementException = BaseDriver.ElementException  # for easy access
-
     @classmethod
     def get_models(cls):
         res = []
