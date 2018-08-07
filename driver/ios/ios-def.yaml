@@ -6,20 +6,19 @@ config:
   wait_for_prompt: "#"
   interface:
     enable:
-      cmd:
-      - "interface {{ interface_name }}"
-      - "  no shutdown"
+      cmd: |
+        interface {{ interface_name }}
+          no shutdown
 
     disable:
-      cmd:
-      - "interface {{ interface_name }}"
-      - "  shutdown"
-
+      cmd: |
+         interface {{ interface_name }}
+           shutdown
+ 
     clear_config:
-      cmd:
-      - "default interface {{ interface_name }}"
+      cmd: "default interface {{ interface_name }}"
 
     enable_ssh:
-      cmd:
-      - 'crypto key generate rsa general-keys modulus 1024'
-      - 'ip ssh version 2'
+      cmd: |
+        crypto key generate rsa general-keys modulus 1024
+        ip ssh version 2

@@ -8,14 +8,14 @@ config:
   
   interface:
     enable:
-      cmd:
-      - "interface {{ interface_name }}"
-      - "  no shutdown"
+      cmd: |
+        interface {{ interface_name }}
+          no shutdown
 
     disable:
-      cmd:
-      - "interface {{ interface_name }}"
-      - "  shutdown"
+      cmd: |
+         interface {{ interface_name }}
+           shutdown
 
     # clear_config:
     #   cmd:
