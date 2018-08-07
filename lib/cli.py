@@ -213,13 +213,13 @@ class CLI_interface_set_admin_state(BaseCLI):
 # Topology
 # ########################################################################
 
-class CLI_l2_neighbours(BaseCLI):
+class CLI_l2_peers(BaseCLI):
 
     def run(self):
         super().run()
         peers = self.mgr.l2_peers()
-        res = self.mgr.l2_neighbours()
-        print("Result :", res)
+        for peer in peers:
+            print("peer", peer)
 
 
 # ########################################################################
