@@ -229,6 +229,10 @@ class IOS_Manager(BaseDriver):
             self.local_if = local_if
             self.remote_if = remote_if
             self.remote_platform = remote_platform
+            
+        def __str__(self):
+            return "Peer(hostname %s, local_if %s, remote_if %s, remote_platform %s)" % \
+               (self.hostname, self.local_if, self.remote_if, self.remote_platform)
 
     def add_peer(self, peers, peer):
         if peer is None:
