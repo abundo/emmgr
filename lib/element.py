@@ -20,9 +20,6 @@ import emmgr.lib.util as util
 import emmgr.lib.comm as comm
 
 
-driverDir   = "/opt/emmgr/driver"   # todo, config
-
-
 class Element:
     """
     Manage one element. This is a stub that loads the real driver
@@ -33,10 +30,10 @@ class Element:
     @classmethod
     def get_models(cls):
         res = []
-        models = os.listdir(driverDir)
+        models = os.listdir(config.driver_dir)
         models = sorted(models)
         for model in models:
-            if model[0] != "_" and os.path.isdir(driverDir + os.sep + model):
+            if model[0] != "_" and os.path.isdir(config.driver_dir + os.sep + model):
                 res.append(model)
         return res
 
@@ -58,7 +55,7 @@ class Element:
         self._load_settings()
 
         # load the element driver for the element model
-        driver_file = driverDir + "/%s.py" % self._settings[-1].driver
+        driver_file = config.driver_dir + "/%s.py" % definitions[-1].driver
         if not os.path.exists(driver_file):
             raise self.ElementException("Missing element driver %s" % driver_file)
         self._drivermodule = util.import_file(driver_file)
