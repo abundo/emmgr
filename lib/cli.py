@@ -61,6 +61,19 @@ class BaseCLI(util.BaseCLI):
 # Generic
 # ########################################################################
 
+class CLI_list_models(BaseCLI):
+    
+    def add_arguments(self):
+        """Avoid adding default arguments"""
+        pass
+    
+    def run(self):
+        print("Models:")
+        for model in self.mgr_cls.get_models():
+            print("   ", model)
+ 
+ 
+
 class CLI_reload(BaseCLI):
 
     def add_arguments(self):
