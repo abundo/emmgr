@@ -14,6 +14,9 @@ dummy = object()
 
 
 class BaseDriver:
+    """
+    Base class for all drivers
+    """
 
     ElementException = ElementException
 
@@ -72,6 +75,7 @@ class BaseDriver:
                 match.append(line)
         return match
 
+
     def str_to_lines(self, lines):
         if isinstance(lines, str):
             lines = lines.split("\n")
@@ -79,10 +83,15 @@ class BaseDriver:
             lines = [lines]
         return lines
 
+
     # ########################################################################
     # Generic
     # ########################################################################
 
+    @classmethod
+    def get_models(cls):
+        raise ElementException("Not implemented")
+        
     def connect(self):
         raise ElementException("Not implemented")
 

@@ -125,7 +125,6 @@ class CLI_configure(BaseCLI):
 
     def run(self):
         super().run()
-        print("config", self.args.config)
         res =  self.mgr.configure(config_lines=self.args.config)
         print("Result :", res)
 

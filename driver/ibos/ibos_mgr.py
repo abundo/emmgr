@@ -137,7 +137,6 @@ class IBOS_Manager(BaseDriver):
         if len(tmp) < 2:
             raise ElementException("Cannot find system MAC address")
         mac = tmp[1].strip()
-        # mac = mac + "..."    # during development, check if error handing works if license file does not exist
 
         # Fetch the license text
         url = "%s/ibos-%s.lic" % (url, mac)
@@ -625,7 +624,7 @@ class IBOS_Manager(BaseDriver):
             # Enable new image
             self.sw_set_boot(filename)
 
-Driver = IBOS_Manager
+Driver = IBOS_Manager   # Easy access
 
 if __name__ == '__main__':
     sys.argv.append("-m ibos")
