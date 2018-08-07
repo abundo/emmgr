@@ -498,6 +498,21 @@ class CLI_sw_upgrade(BaseCLI):
         print("   ", status)
 
 
+# ########################################################################
+# License management
+# ########################################################################
+
+class CLI_license_get(BaseCLI):
+    
+    def run(self):
+        try:
+            super().run()
+            res =  self.mgr.license_get()
+            print("Result :", res)
+        except self.mgr.ElementException as err:
+            print(err)
+
+
 class CLI_license_set(BaseCLI):
     
     def add_arguments(self):

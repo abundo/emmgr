@@ -92,11 +92,20 @@ class BaseDriver:
     def reload(self, save_config=True):
         raise ElementException("Not implemented")
 
+    def run(self, cmd=None, filter_=None, callback=None):
+        raise ElementException("Not implemented")
+
+
+    # ########################################################################
+    # License
+    # ########################################################################
+    
+    def license_get(self):
+        raise ElementException("Not implemented")
+
     def license_set(self, url=None, save_config=True, reload=None, callback=None):
         raise ElementException("Not implemented")
 
-    def run(self, cmd=None, filter_=None, callback=None):
-        raise ElementException("Not implemented")
 
     # ########################################################################
     # Configuration
