@@ -112,13 +112,9 @@ class BaseCLI:
     def __init__(self):
         import argparse
         self.parser = argparse.ArgumentParser()
-        self.add_arguments2()
         self.add_arguments()
         self.args = self.parser.parse_args()
         
-    def add_arguments2(self):
-        """Superclass overrides this to add additional arguments"""
-
     def add_arguments(self):
         """Superclass overrides this to add additional arguments"""
 

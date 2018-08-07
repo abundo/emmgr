@@ -30,7 +30,7 @@ class BaseCLI(util.BaseCLI):
         self.mgr = self.mgr_class(**hostconfig)
 
 
-    def add_arguments2(self):
+    def add_arguments(self):
         self.parser.add_argument('-H', '--hostname',
                                  help='Hostname of element')
         self.parser.add_argument('-i', '--ip',
@@ -57,11 +57,8 @@ class BaseCLI(util.BaseCLI):
                                  help='Set loglevel, one of < info | warning | error | debug >', 
                                  default='info' )
 
-    def add_arguments(self):
-        """Superclass overrides this to add additional arguments"""
-
     def run(self):
-        raise ValueError("You must override the run() method")
+        if self.args.hostname is None and self.args.ip is None:
 
 
 # ########################################################################
@@ -71,6 +68,7 @@ class BaseCLI(util.BaseCLI):
 class CLI_reload(BaseCLI):
 
     def add_arguments(self):
+        super().add_arguments()
         self.parser.add_argument("-s", "--save_config",
                                  action="store_true",
                                  help='Save current config to startup config',
@@ -84,6 +82,7 @@ class CLI_reload(BaseCLI):
 class CLI_run(BaseCLI):
     
     def add_arguments(self):
+        super().add_arguments()
         self.parser.add_argument('-c', '--command',
                                  required=True,
                                  help='Command to run',
@@ -105,6 +104,7 @@ class CLI_run(BaseCLI):
 class CLI_configure(BaseCLI):
     
     def add_arguments(self):
+        super().add_arguments()
         self.parser.add_argument('-c', '--config',
                                  action="append",
                                  required=True,
@@ -151,6 +151,7 @@ class CLI_set_startup_config(BaseCLI):
 class CLI_interface_clear_config(BaseCLI):
 
     def add_arguments(self):
+        super().add_arguments()
         self.parser.add_argument("--interface",
                                  help='Interface to clear',
                                  )
@@ -163,6 +164,7 @@ class CLI_interface_clear_config(BaseCLI):
 class CLI_interface_get_admin_state(BaseCLI):
 
     def add_arguments(self):
+        super().add_arguments()
         self.parser.add_argument("--interface",
                                  help='Interface to clear',
                                  )
@@ -216,6 +218,7 @@ class CLI_vlan_get(BaseCLI):
 class CLI_vlan_create(BaseCLI):
 
     def add_arguments(self):
+        super().add_arguments()
         self.parser.add_argument("-v", "--vlan",
                                  type=int,
                                  )
@@ -233,6 +236,7 @@ class CLI_vlan_create(BaseCLI):
 class CLI_vlan_delete(BaseCLI):
 
     def add_arguments(self):
+        super().add_arguments()
         self.parser.add_argument("-v", "--vlan",
                                  type=int,
                                  )
@@ -248,6 +252,7 @@ class CLI_vlan_delete(BaseCLI):
 class CLI_vlan_interface_get(BaseCLI):
 
     def add_arguments(self):
+        super().add_arguments()
         self.parser.add_argument("--interface")
 
     def run(self):
@@ -262,6 +267,7 @@ class CLI_vlan_interface_get(BaseCLI):
 class CLI_vlan_interface_create(BaseCLI):
 
     def add_arguments(self):
+        super().add_arguments()
         self.parser.add_argument("--interface")
         self.parser.add_argument("-v", "--vlan",
                                  type=int,
@@ -283,6 +289,7 @@ class CLI_vlan_interface_create(BaseCLI):
 class CLI_vlan_interface_delete(BaseCLI):
 
     def add_arguments(self):
+        super().add_arguments()
         self.parser.add_argument("--interface")
         self.parser.add_argument("--vlan",
                                  type=int,
@@ -298,6 +305,7 @@ class CLI_vlan_interface_delete(BaseCLI):
 class CLI_vlan_interface_set_native(BaseCLI):
 
     def add_arguments(self):
+        super().add_arguments()
         self.parser.add_argument("-i", "--interface")
         self.parser.add_argument("-v", "--vlan",
                                  type=int,
@@ -317,6 +325,7 @@ class CLI_vlan_interface_set_native(BaseCLI):
 
 class CLI_sw_exist(BaseCLI):
     def add_arguments(self):
+        super().add_arguments()
         self.parser.add_argument('-f', '--filename',
                                  required=True,
                                  help='Filename',
@@ -336,6 +345,7 @@ class CLI_sw_get_boot(BaseCLI):
 class CLI_sw_list(BaseCLI):
 
     def add_arguments(self):
+        super().add_arguments()
         self.parser.add_argument('--filter',
                             help='Filter out firmware names',
                             default=None)
@@ -350,6 +360,7 @@ class CLI_sw_list(BaseCLI):
 class CLI_sw_copy_to(BaseCLI):
 
     def add_arguments(self):
+        super().add_arguments()
         self.parser.add_argument('-f', '--filename',
                                  required=True,
                                  help='Filename',
@@ -381,6 +392,7 @@ class CLI_sw_copy_to(BaseCLI):
 class CLI_sw_set_boot(BaseCLI):
         
     def add_arguments(self):
+        super().add_arguments()
         self.parser.add_argument('-f', '--filename',
                                  required=True,
                                  help='Filename',
@@ -396,6 +408,7 @@ class CLI_sw_set_boot(BaseCLI):
 class CLI_sw_delete(BaseCLI):
 
     def add_arguments(self):
+        super().add_arguments()
         self.parser.add_argument('-f', '--filename',
                                  required=True,
                                  help='Filename',
@@ -421,6 +434,7 @@ class CLI_sw_delete_unneeded(BaseCLI):
 class CLI_sw_upgrade(BaseCLI):
     
     def add_arguments(self):
+        super().add_arguments()
         self.parser.add_argument('-f', '--filename',
                                  required=True,
                                  help='Filename',
@@ -445,6 +459,7 @@ class CLI_sw_upgrade(BaseCLI):
 class CLI_license_set(BaseCLI):
     
     def add_arguments(self):
+        super().add_arguments()
         self.parser.add_argument('--url',
                                  required=True,
                                  help='Where to fetch license, using curl',
