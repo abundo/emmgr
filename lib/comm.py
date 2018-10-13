@@ -8,6 +8,7 @@ Supports ssh and telnet
 import os.path
 import re
 import select
+import tty
 import pty
 
 import emmgr.lib.log as log
@@ -50,6 +51,8 @@ class RemoteConnection:
         if self.pid == 0:
             os.execvp(cmd[0], cmd)  # replace process
             os._exit(1)             # fail to execv
+            
+        tty.setraw(self.fd)         # Disable echo on input
         if self._method == "telnet":
             # os.write(self.fd, bytearray([255, 254, 1])) # IAC DONT ECHO
             # force character at a time
