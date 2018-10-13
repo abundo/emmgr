@@ -53,15 +53,6 @@ class RemoteConnection:
             os._exit(1)             # fail to execv
             
         tty.setraw(self.fd)         # Disable echo on input
-        if self._method == "telnet":
-            # os.write(self.fd, bytearray([255, 254, 1])) # IAC DONT ECHO
-            # force character at a time
-            os.write(self.fd, b"\001")
-            os.write(self.fd, b"mode character\n")
-            os.write(self.fd, b"\001")
-            os.write(self.fd, b"send dont echo\n")
-            # time.sleep(0.5)
-            # fcntl.fcntl(self.fd, fcntl.F_SETFL, os.O_NONBLOCK)
         return True
 
     def disconnect(self):

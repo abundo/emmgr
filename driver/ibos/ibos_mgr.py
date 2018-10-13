@@ -50,7 +50,6 @@ class IBOS_Manager(BaseDriver):
                 raise comm.CommException(1, "Error waiting for username prompt")
             self.em.writeln(self.username)
 
-        # match = self.em.expect(r"assword:")
         match = self.em.expect( { "password": r"password:", "disable": r">"} )
         if match is None:
             raise comm.CommException(1, "Error waiting for password prompt")
