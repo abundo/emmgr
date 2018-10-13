@@ -56,12 +56,13 @@ class IBOS_Manager(BaseDriver):
 
         if match == 'password':
             self.em.writeln(self.password)
+            self.em.before = self.em.before[:-1]
 
             # Wait for CLI prompt
-            match = self.em.expect( { "disable": r">", "enable": r"#"} )
+            match = self.em.expect( { "disable": r">", "enable": r"# "} )
             if match is None:
                 raise comm.CommException(1, "Error waiting for CLI prompt")
-        
+            
         if match == 'disable':
             # Non-privileged mode, goto enable mode
             self.em.writeln("enable")
@@ -70,7 +71,7 @@ class IBOS_Manager(BaseDriver):
                 raise comm.CommException(1, "Error waiting for prompt after enable")
             self.em.writeln(self.enable_password)
             self.wait_for_prompt()
-            
+        
         self.em.writeln("terminal no pager")
         self.wait_for_prompt()
 
