@@ -106,7 +106,7 @@ class CLI_run(BaseCLI):
         if lines:
             print("Output from command:", self.args.command)
             for line in lines:
-                print(line)
+                print("%s" % line)
         else:
             print("No output")
 
@@ -121,13 +121,29 @@ class CLI_configure(BaseCLI):
         super().add_arguments()
         self.parser.add_argument('-c', '--config',
                                  action="append",
-                                 required=True,
                                  help='New configuration',
+                                 )
+        self.parser.add_argument('-f', '--file',
+                                 help='File with configuration commands',
+                                 )
+        self.parser.add_argument('-s', '--save_running_config',
+                                 default=False,
+                                 action="store_true",
+                                 help='File with configuration commands',
                                  )
 
     def run(self):
+        if not (self.args.config or self.args.file):
+            print("Error: You need to specify config or file")
+            sys.exit(1)
         super().run()
-        res =  self.mgr.configure(config_lines=self.args.config)
+        if self.args.file:
+            lines = []
+            for line in open(self.args.file):
+                    lines.append(line.strip())
+        else:
+            lines = self.args.config
+        res =  self.mgr.configure(config_lines=lines, save_running_config=self.args.save_running_config)
         print("Result :", res)
 
 
