@@ -45,6 +45,7 @@ class BaseDriver:
         self.password = password
         self.enable_password = enable_password
         self.use_ssh = use_ssh    # If true use ssh instead of telnet
+        self.kwargs = kwargs
 
         if self.ipaddr_mgmt:
             self.hostname = self.ipaddr_mgmt
@@ -60,7 +61,9 @@ class BaseDriver:
             self._definitions = definitions
 
         self._wait_for_prompt = self.get_definition("config.wait_for_prompt", None)    # cache for performance
-
+        if self.kwargs['telnet']:
+            self.use_ssh = False
+        
     @classmethod
     def load_definitions(cls, model=None):
         """
