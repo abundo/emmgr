@@ -41,11 +41,11 @@ class BaseCLI(util.BaseCLI):
         self.parser.add_argument('-e', '--enable_password',
                                  default=hostconfig['enable_password'],
                                  help='Password for enable mode',)
-        self.parser.add_argument('-t',
-                                 '--telnet',
-                                 action='store_true',
+        self.parser.add_argument('-t', '--telnet',
+                                 action='store_false',
                                  help='Use Telnet',
-                                 default=False)
+                                 dest='use_ssh',
+                                 default=True)
         self.parser.add_argument('--loglevel',
                                  choices=['info', 'warning', 'error', 'debug'],
                                  help='Set loglevel, one of < info | warning | error | debug >', 

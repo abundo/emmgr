@@ -53,12 +53,13 @@ class RemoteConnection:
         if self._method == "telnet":
             # os.write(self.fd, bytearray([255, 254, 1])) # IAC DONT ECHO
             # force character at a time
-            os.write(self.fd, b"\001")
-            os.write(self.fd, b"mode character\n")
-            os.write(self.fd, b"\001")
-            os.write(self.fd, b"send dont echo\n")
+            #os.write(self.fd, b"\001")
+            #os.write(self.fd, b"mode character\n")
+            #os.write(self.fd, b"\001")
+            #os.write(self.fd, b"send dont echo\n")
             # time.sleep(0.5)
             # fcntl.fcntl(self.fd, fcntl.F_SETFL, os.O_NONBLOCK)
+            pass
         return True
 
     def disconnect(self):
