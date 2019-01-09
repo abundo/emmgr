@@ -56,7 +56,7 @@ class VRP_Manager(BaseDriver):
         self.wait_for_prompt()
 
         self.em.writeln("super")
-        match = self.em.expect({ "sendpassword": r"assword:", "continue": "3-MANAGE" })
+        match = self.em.expect({ "sendpassword": r"assword:", "continue": "3-MANAGE", "ignore": r"Error.*position." })
         if match is None:
             raise comm.CommException(1, "Error waiting for prompt after enable")
         if match is "sendpassword":
