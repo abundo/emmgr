@@ -104,7 +104,7 @@ class CLI_run(BaseCLI):
         super().run()
         lines = self.mgr.run(cmd=self.args.command)
         if lines:
-            print("Output from command:", self.args.command)
+            #print("Output from command:", self.args.command)
             for line in lines:
                 print("%s" % line)
         else:
