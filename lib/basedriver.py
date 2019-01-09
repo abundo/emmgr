@@ -61,8 +61,6 @@ class BaseDriver:
             self._definitions = definitions
 
         self._wait_for_prompt = self.get_definition("config.wait_for_prompt", None)    # cache for performance
-        if self.kwargs['telnet']:
-            self.use_ssh = False
         
     @classmethod
     def load_definitions(cls, model=None):
