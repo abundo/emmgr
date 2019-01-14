@@ -551,7 +551,7 @@ class IBOS_Manager(BaseDriver):
     def sw_set_boot(self, filename, callback=None):
         """
         Check if filename exist in element
-        if true configure element to boot with the filename
+        If True configure element to boot with the filename
         """
         self.connect()
         if not self.sw_exist(filename):
