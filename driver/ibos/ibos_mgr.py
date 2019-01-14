@@ -5,6 +5,7 @@ A driver to manage Waystream iBOS elements
 
 import sys
 import re
+import time
 from orderedattrdict import AttrDict
 
 import emmgr.lib.log as log
@@ -106,7 +107,9 @@ class IBOS_Manager(BaseDriver):
         if save_config:
             self.save_running_config()
         self.em.writeln("reload")
+        match = self.em.expect(r"\[y/N\]\:")
         self.em.writeln("y")
+        time.sleep(2)
         
         # Force the connection closed
         self.em = None
