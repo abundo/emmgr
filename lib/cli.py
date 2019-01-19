@@ -207,7 +207,7 @@ class CLI_interface_get_admin_state(BaseCLI):
         res = self.mgr.interface_get_admin_state(interface=self.args.interface)
         print("Result :", res)
 
-, 
+
 class CLI_interface_set_admin_state(BaseCLI):
 
     def add_arguments(self):
