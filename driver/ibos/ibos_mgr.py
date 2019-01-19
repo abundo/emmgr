@@ -154,7 +154,7 @@ class IBOS_Manager(BaseDriver):
             c.close()
             license_text = buffer.getvalue().decode()
         except pycurl.error as err:
-            raise ElementException("Error reading license file from %s" % url)
+            raise ElementException("Error reading license file from %s: %s" % (url, err))
             
         # license_text = license_text.replace("\r\n", "\n")
                     
