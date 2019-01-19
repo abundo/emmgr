@@ -375,3 +375,16 @@ class BaseDriver:
         If needed, other firmware is deleted to make room for the new firmware
         """
         raise ElementException("Not implemented")
+
+    
+    def get_bootloader(self, callback=None):
+        """       
+        Returns current bootloader
+        """
+        raise ElementException("Not implemented")
+
+    def set_bootloader(self, mgr=None, filename=None, callback=None):
+        """
+        Copies bootloader to element and activates it
+        """
+        raise ElementException("Not implemented")

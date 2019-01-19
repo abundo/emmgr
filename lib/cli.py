@@ -75,7 +75,6 @@ class CLI_list_models(BaseCLI):
             print("   ", model)
  
  
-
 class CLI_reload(BaseCLI):
 
     def add_arguments(self):
@@ -208,7 +207,7 @@ class CLI_interface_get_admin_state(BaseCLI):
         res = self.mgr.interface_get_admin_state(interface=self.args.interface)
         print("Result :", res)
 
-
+, 
 class CLI_interface_set_admin_state(BaseCLI):
 
     def add_arguments(self):
@@ -515,6 +514,42 @@ class CLI_sw_upgrade(BaseCLI):
                                  )
         print("sw_upgrade status:", res)
 
+    def callback(self, status):
+        print("   ", status)
+
+
+class CLI_get_bootloader(BaseCLI):
+
+    def run(self):
+        try:
+            super().run()
+            bootloader = self.mgr.get_bootloader()
+            print("Bootloader in use: '%s'" % bootloader)
+        except comm.CommException as e:
+            print("Error, %s" % (e.message))
+
+
+class CLI_set_bootloader(BaseCLI):
+
+    def add_arguments(self):
+        super().add_arguments()
+        self.parser.add_argument('--server',
+                                 default=config.em.default_firmware_server,
+                                 help='Server to copy from/to',
+                                 )
+        self.parser.add_argument('-f', '--filename',
+                                 required=True,
+                                 help='Filename',
+                                 )
+
+    def run(self):
+        super().run()
+        res = self.mgr.set_bootloader(mgr=self.args.server, 
+                                 filename=self.args.filename, 
+                                 callback=self.callback,
+                                 )
+        print(res)
+        
     def callback(self, status):
         print("   ", status)
 
