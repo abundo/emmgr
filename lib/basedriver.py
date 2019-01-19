@@ -11,6 +11,8 @@ import emmgr.lib.config as config
 import emmgr.lib.log as log
 import emmgr.lib.util as util
 
+import jinja2
+
 dummy = object()        # Used to differentiate between dummy and None
 
 
@@ -198,36 +200,47 @@ class BaseDriver:
     # Interface management
     # ########################################################################
 
-    def interface_clear_config(self, interface):
+    def interface_clear_config(self, interface=None, save_running_config=False, callback=None):
         """
         Default driver that resets a interface to its default configuration
-        This default driver is used if there is a CLI command for this.
+        This default driver is used if there is a CLI command for this defined, 
+        and method isn't overridden
         """
-        cmd = self.get_definition("config.interface.clear_config")
-        raise ElementException("Not implemented")
-
-    def interface_get_admin_state(self, interface, enabled):
-        """
-        Default driver that enables/disables a interface
-        This default driver is used if there is a CLI command for this.
-        """
-        raise ElementException("Not implemented")
-        
-    def interface_set_admin_state(self, interface, enabled):
-        """
-        Default driver that enables/disables a interface
-        This default driver is used if there is a CLI command for this.
-        """
-        raise ElementException("Not implemented")
         try:
-            if enabled:
-                attr = self.get_definition("config.interface.enable")
-            else:
-                attr = self.get_definition("config.interface.disable")
-            # Render config to apply
+            cmd_template = self.get_definition("config.interface.clear_config.cmd")
         except KeyError:
             raise ElementException("Not implemented")
+        t = jinja2.Template(cmd_template)
+        cmd = t.render(interface_name=interface)
+        cmd = cmd.split('\n')
+        return self.configure(config_lines=cmd, save_running_config=save_running_config, callback=callback)
+
+    def interface_get_admin_state(self, interface=None):
+        """
+        Default driver that retrieves an interface admin state
+        This default driver is used if there is a CLI command for this.
+        """
+        raise ElementException("Not implemented")
         
+    def interface_set_admin_state(self, interface=None, state=None, save_running_config=False, callback=None):
+        """
+        Default driver that enables/disables a interface
+        This default driver is used if there is a CLI command for this defined, 
+        and method isn't overridden
+        """
+        if state:
+            attr = "config.interface.enable.cmd"
+        else:
+            attr = "config.interface.disable.cmd"
+        try:
+            cmd_template = self.get_definition(attr)
+        except KeyError:
+            raise ElementException("Not implemented")
+        t = jinja2.Template(cmd_template)
+        cmd = t.render(interface_name=interface)
+        cmd = cmd.split('\n')
+        return self.configure(config_lines=cmd, save_running_config=save_running_config, callback=callback)
+    
         
     # ########################################################################
     # Topology

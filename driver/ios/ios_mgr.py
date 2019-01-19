@@ -193,12 +193,8 @@ class IOS_Manager(BaseDriver):
     # Interface management
     # ########################################################################
 
-    def interface_clear_config(self, interface):
-        """
-        Default driver that resets a interface to its default configuration
-        This default driver is used if there is a CLI command for this.
-        """
-        raise ElementException("Not implemented")
+    # use default method
+    # def interface_clear_config(self, interface):
 
     def interface_get_admin_state(self, interface, enabled):
         """
@@ -207,12 +203,8 @@ class IOS_Manager(BaseDriver):
         """
         raise ElementException("Not implemented")
         
-    def interface_set_admin_state(self, interface, enabled):
-        """
-        Default driver that enables/disables a interface
-        This default driver is used if there is a CLI command for this.
-        """
-        raise ElementException("Not implemented")
+    # use default method
+    # def interface_set_admin_state(self, interface, enabled):
 
     # ########################################################################
     # Topology
