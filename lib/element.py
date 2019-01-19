@@ -18,12 +18,16 @@ import emmgr.lib.util as util
 import emmgr.lib.comm as comm
 
 
+class ElementException(Exception):
+    pass
+
+
 class Element:
     """
-    Manage one element. 
-    This is a object factory, returns BaseDriver + actual driver
-    Manage one element. This is a stub that loads the real driver
+    Manage one element. Load the driver that does the actual work and
+    bridge calls to it.
     """
+    exception = ElementException
 
     @classmethod
     def get_models(cls):
