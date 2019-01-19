@@ -219,6 +219,8 @@ class CLI_interface_set_admin_state(BaseCLI):
                                  )
         self.parser.add_argument("-s", "--state",
                                  help='new state',
+                                 required=True,
+                                 type=util.str2bool,
                                  )
 
     def run(self):
