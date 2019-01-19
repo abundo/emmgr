@@ -212,8 +212,10 @@ class CLI_interface_get_admin_state(BaseCLI):
 class CLI_interface_set_admin_state(BaseCLI):
 
     def add_arguments(self):
-        self.parser.add_argument("-i", "--interface",
+        super().add_arguments()
+        self.parser.add_argument("--interface",
                                  help='Interface to modify',
+                                 required=True,
                                  )
         self.parser.add_argument("-s", "--state",
                                  help='new state',
