@@ -379,7 +379,7 @@ class BaseDriver:
 
     def sw_set_boot(self, filename, callback=None):
         """
-        Set whihch firmware to boot
+        Set which firmware to boot
         """
         raise ElementException("Not implemented")
 
