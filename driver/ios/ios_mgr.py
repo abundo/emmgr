@@ -118,7 +118,7 @@ class IOS_Manager(BaseDriver):
         self.connect()
         self.em.writeln(cmd)
         self.wait_for_prompt()
-        output = self.em.before.split("\n")
+        output = self.em.before.split("\r\n")
         if len(output) > 1:
             output = output[1:]
         return self.filter_(output, filter_)
@@ -129,7 +129,7 @@ class IOS_Manager(BaseDriver):
 
     def wait_for_prompt(self):
         log.debug("------------------- wait_for_prompt() -------------------")
-        match = self.em.expect("#")
+        match = self.em.expect(r"#")
         return match
 
     def configure(self, config_lines, save_running_config=False, callback=None):
