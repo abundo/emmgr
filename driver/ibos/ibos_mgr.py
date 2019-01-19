@@ -626,6 +626,39 @@ class IBOS_Manager(BaseDriver):
         if set_boot:
             # Enable new image
             self.sw_set_boot(filename)
+            
+    def get_bootloader(self, callback=None):
+        """       
+        Returns current bootloader
+        """
+        self.connect()
+        cmd = 'show ver | include "^Bootloader"'
+        lines = self.run(cmd)
+        if len(lines) != 1:
+            raise ElementException(1, "Cannot find bootloader in use: %s" % lines)
+        
+        # "Bootloader version: msboot-ms4k-4.0.3-R"
+        tmp = lines[0].split(':')
+        if len(tmp) != 2:
+            raise ElementException(1, "Cannot find bootloader in use: %s" % tmp)
+        return tmp[1].strip()
+        
+
+    def set_bootloader(self, mgr=None, filename=None, callback=None):
+        """
+        Copies bootloader to element and activate it
+        
+        copy tftp://10.10.16.50/msboot-ms4k-3.7.6-R.bin bootloader 
+        517120/561821
+        Verifying checksum of downloaded bootloader.
+        Writing downloaded bootloader to flash (this may take a few seconds).
+        Verifying checksum of bootloader on flash.
+        Execute command 'reload' to start new bootloader.
+        Transferred 561821 bytes successfully in 5 seconds
+        """
+
+        return self.sw_copy_to(mgr=mgr, filename=filename, dest_filename='bootloader', callback=callback)
+            
 
 Driver = IBOS_Manager   # Easy access
 
