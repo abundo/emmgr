@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Base driver for em drivers
 Implements common functionality
