@@ -200,7 +200,7 @@ class CLI_interface_get_admin_state(BaseCLI):
     def add_arguments(self):
         super().add_arguments()
         self.parser.add_argument("--interface",
-                                 help='Interface to clear',
+                                 required=True,
                                  )
 
     def run(self):
