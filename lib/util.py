@@ -9,6 +9,7 @@ import datetime
 import json
 import yaml
 import pprint
+import argparse
 import importlib.machinery
 from orderedattrdict import AttrDict
 
@@ -110,7 +111,6 @@ def yaml_load(filename):
 class BaseCLI:
     
     def __init__(self):
-        import argparse
         self.parser = argparse.ArgumentParser()
         self.add_arguments()
         self.args = self.parser.parse_args()

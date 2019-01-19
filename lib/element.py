@@ -8,10 +8,8 @@ Each element uses a driver, which does most of the work.
 """
 
 import os
-import sys
 import yaml
 import socket
-from orderedattrdict import AttrDict
 
 from emmgr.lib.basedriver import BaseDriver
 import emmgr.lib.config as config
