@@ -52,7 +52,7 @@ class BaseCLI(util.BaseCLI):
                                  default='info' )
 
     def run(self):
-        if self.args.hostname is None and self.args.ip is None:
+        if self.args.hostname is None and self.args.ipaddr_mgmt is None:
             util.die('Error: You need to specify -H/--hostname or -i/--ipaddr_mgmt')
 
         log.setLevel(self.args.loglevel)
