@@ -1,2 +1,4 @@
 ---
 driver: zxros/zxros_mgr
+# firmware_filter: 'todo'
+# firmware_device: 'todo'
