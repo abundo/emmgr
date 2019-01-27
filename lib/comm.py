@@ -96,7 +96,7 @@ class RemoteConnection:
     - ensures that all newlines follows unix style "\n"
     """
 
-    def __init__(self, codec="ascii", timeout=60, method=None, newline="\n"):
+    def __init__(self, codec="utf8", timeout=60, method=None, newline="\n"):
         self._codec = codec
         self._timeout = timeout
         self._method = method
