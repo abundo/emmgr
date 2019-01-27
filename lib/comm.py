@@ -10,6 +10,9 @@ import re
 import select
 import tty
 import pty
+import telnetlib
+import socket
+import ssh2.session
 
 import emmgr.lib.log as log
 
@@ -18,6 +21,73 @@ class CommException(Exception):
     def __init__(self, errno, message):
         self.errno = errno
         self.message = message
+
+
+class Telnet_Connection:
+    """
+    A Wrapper for a telnet connection
+    """
+    def __init__(self, host, port=None, username=None, password=None):
+        """
+        Open a telnet connection
+        """
+        if port is None: port = 23
+        self.tn = telnetlib.Telnet(str(host), port)
+        self.fd = self.tn.fileno()
+    
+    def read(self, length=None, timeout=None):
+        return self.tn.read_eager()
+    
+    def write(self, data):
+        self.tn.write(data)
+
+
+class SSH_Connection:
+    """
+    A Wrapper for a SSH connection
+    """
+    def __init__(self, host, port=None, username=None, password=None):
+        """
+        Open a SSH connection and authenticate
+        """
+        if port is None:
+            port = 22
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        log.debug("------------------- socket.connect(%s) -------------------" % host)
+        try:
+            self.sock.connect((str(host), port))
+        except OSError as err:
+            log.error("socket.connect() host %s, err %s" % (host, err))
+
+        self.ssh_session = ssh2.session.Session()
+        log.debug("------------------- ssh_session.handshake(%s) -------------------" % host)
+        try:
+            self.ssh_session.handshake(self.sock)
+        except ssh2.exceptions.SocketRecvError as err:
+            raise CommException(1, err)
+        log.debug("------------------- ssh_session.userauth_password(%s) -------------------" % host)
+        self.ssh_session.userauth_password(username, password)
+
+        log.debug("------------------- ssh_session.open_session(%s) -------------------" % host)
+        self.channel = self.ssh_session.open_session()
+        log.debug("------------------- channel.pty(%s) -------------------" % host)
+        self.channel.pty(term="vt100")
+        # self.channel.pty(term="dumb")
+        log.debug("------------------- channel.shell(%s) -------------------" % host)
+        self.channel.shell()
+        self.fd = self.sock.fileno()
+
+    def read(self, length=None, timeout=None):
+        size, data = self.channel.read(size = length)
+        return data
+    
+    def write(self, data):
+        self.channel.write(data)
+    
+    def close(self):
+        self.channel.close()
+        self.sock.close()
+        self.fd = -1
 
 
 class RemoteConnection:
