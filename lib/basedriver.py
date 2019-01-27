@@ -139,7 +139,9 @@ class BaseDriver:
         raise ElementException("Not implemented")
         
     def connect(self):
-        raise ElementException("Not implemented")
+        log.debug("------------------- connect(%s) -------------------" % self.hostname)
+        self.transport.connect(self.hostname, port=self.port, username=self.username, password=self.password)
+        self.em = comm.Expect(self.transport)
 
     def disconnect(self):
         raise ElementException("Not implemented")

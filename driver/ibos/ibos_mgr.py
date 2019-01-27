@@ -30,22 +30,11 @@ class IBOS_Manager(BaseDriver):
         Connect to the element using telnet or ssh
         login, go to enable mode
         """
-        if self.transport:
-            # todo verify connectivity
+        if self.em:
             return
-
-        if self.use_ssh:
-            if self.port == None: self.port = 22
-            self.transport = comm.RemoteConnection(timeout=20, method="ssh")
-        else:
-            if self.port == None: self.port = 23
-            self.transport = comm.RemoteConnection(timeout=20, method="telnet")
-            
-        self.transport.connect(self.hostname, self.username)
-        self.em = comm.Expect(self.transport)
+        super().connect()
 
         if not self.use_ssh:
-            # telnetlib does no login
             match = self.em.expect(r"sername:")
             if match is None:
                 raise comm.CommException(1, "Error waiting for username prompt")
