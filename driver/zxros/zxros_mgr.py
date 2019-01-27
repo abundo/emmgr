@@ -59,7 +59,9 @@ class ZXROS_Manager(BaseDriver):
         self.wait_for_prompt()
 
     def disconnect(self):
-        """Disconnect from the element"""
+        """
+        Disconnect from the element
+        """
         if self.transport:
             log.debug("------------------- disconnect() -------------------")
             self.em.writeln("logout")
@@ -90,6 +92,10 @@ class ZXROS_Manager(BaseDriver):
         self.transport = None
 
     def run(self, cmd=None, filter_=None, timeout=None, callback=None):
+        """
+        Run a command on element
+        returns a list with configuration lines, optionally filtering lines with a regex
+        """
         self.connect()
         log.debug("------------------- run() -------------------")
         self.em.writeln(cmd)

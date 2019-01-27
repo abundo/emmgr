@@ -66,16 +66,22 @@ class IOS_Manager(BaseDriver):
         self.wait_for_prompt()
 
     def disconnect(self):
-        """Disconnect from the element"""
+        """
+        Disconnect from the element
+        """
         if self.transport:
+            log.debug("------------------- disconnect() -------------------")
             self.em.writeln("exit")
             self.em = None
             self.transport.disconnect()
             self.transport = None
             
 #     def reload(self, save_config=True, callback=None):
-#         """Reload the element. If running-config is unsaved, option to save it"""
+#         """
+#         Reload the element. If running-config is unsaved, option to save it
+#         """
 #         self.connect()
+#         log.debug("------------------- reload() -------------------")
 #         self.em.writeln("reload")
 #         
 #         while True:
@@ -104,8 +110,13 @@ class IOS_Manager(BaseDriver):
 #         self.transport.disconnect()
 #         self.transport = None
 
-    def run(self, cmd=None, filter_=None, callback=None):
+    def run(self, cmd=None, filter_=None, timeout=None, callback=None):
+        """
+        Run a command on element
+        returns a list with configuration lines, optionally filtering lines with a regex
+        """
         self.connect()
+        log.debug("------------------- run() -------------------")
         self.em.writeln(cmd)
         self.wait_for_prompt()
         output = self.em.before.split("\n")

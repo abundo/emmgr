@@ -176,7 +176,7 @@ class BaseDriver:
     # ########################################################################
 
     def wait_for_prompt(self):
-        log.debug("------------------- wait_for_prompt() -------------------")
+        log.debug("------------------- wait_for_prompt(%s) -------------------" % self.hostname)
         if not self._wait_for_prompt:
             raise ElementException("Not implemented")
         match = self.em.expect(self._wait_for_prompt)

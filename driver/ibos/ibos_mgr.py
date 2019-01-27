@@ -65,8 +65,10 @@ class IBOS_Manager(BaseDriver):
         """
         Disconnect from the element
         """
+        log.debug("------------------- disconnect(%s) -------------------" % self.hostname)
         if self.transport:
-            self.em.writeln("logout")
+            log.debug("------------------- disconnect() -------------------")
+            # self.em.writeln("logout")
             self.em = None
             self.transport.disconnect()
             self.transport = None
@@ -89,6 +91,7 @@ class IBOS_Manager(BaseDriver):
         Reload the element. If running-config is unsaved, option to save it
         """
         self.connect()
+        log.debug("------------------- reload() -------------------")
         if save_config:
             self.save_running_config()
         self.em.writeln("reload")
@@ -164,7 +167,7 @@ class IBOS_Manager(BaseDriver):
     # Configuration
     # ########################################################################
 
-    def configure(self, config_lines, save_running_config=False, callback=None):
+    def configure(self, config_lines=None, save_running_config=False, callback=None):
         """
         Reconfigure device
         todo: trigger on  '%-ERR: <error description>'
@@ -226,7 +229,7 @@ class IBOS_Manager(BaseDriver):
     # Interface management
     # ########################################################################
 
-    def interface_clear_config(self, interface):
+    def interface_clear_config(self, interface=None, save_running_config=False, callback=None):
         """
         iBOS does not have any command to reset interface config 
         Get all interface config and try to remove them
@@ -246,7 +249,7 @@ class IBOS_Manager(BaseDriver):
                     else:
                         cmd.append("no %s" % line)
             
-            lines = self.configure(cmd)
+            lines = self.configure(config_lines=cmd, save_running_config=save_running_config, callback=callback)
 
     def interface_get_admin_state(self, interface=None):
         """
