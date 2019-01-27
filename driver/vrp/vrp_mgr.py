@@ -133,6 +133,7 @@ class VRP_Manager(BaseDriver):
         Get config lines from running-config, optionally filtering with a regex
         returns a list
         """
+        self.connect()
         log.debug("------------------- get_running_config() -------------------")
         if not refresh and self.running_config is None:
             self.running_config = self.run("display current-config", timeout=60)
@@ -153,6 +154,7 @@ class VRP_Manager(BaseDriver):
         Store current-config as startup-config
         status: Todo
         """
+        self.connect()
         log.debug("------------------- save_running_config() -------------------")
         if callback:
             callback("Save current-config as startup-config, hostname %s" % self.hostname)
@@ -282,11 +284,11 @@ class VRP_Manager(BaseDriver):
         Copy file to element
         status: Todo
         """
+        self.connect()
         log.debug("------------------- sw_copy_to() -------------------")
         
         if callback:
             callback("Copy file %s to element" % (filename))
-        self.connect()
         if self.swExist(filename):
             return  # already on device. verify checksum?
          
