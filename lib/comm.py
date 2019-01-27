@@ -129,18 +129,52 @@ class RemoteConnection:
         """
         self._buffer = data.encode(self._codec) + self._buffer
 
-    def read(self, length=2000000, timeout=None):
+    def read(self, length=4096, timeout=None):
         """
-        read from subprocess
-        If length==None, wait for newline, otherwise read length bytes
+        read from connection
+        length is maximum number of bytes to read
         """
+        while True:
+            # return data from buffer if we have any
+            if length and len(self._buffer):
+                if length < len(self._buffer):
+                    data = self._buffer[:length]
+                    self._buffer = self._buffer[length:]
+                else:
+                    data = self._buffer
+                    self._buffer = b""
+                return data.decode(self._codec)
 
-        if length is None:
+            read_sockets, write_sockets, error_sockets = \
+                select.select([self.conn.fd], [], [], self._timeout)
+            if read_sockets == []:
+                # timeout
+                return None
+
+            for sock in read_sockets:
+                if sock == self.conn.fd:
+                    try:
+                        if length:
+                            data = self.conn.read(length)
+                        else:
+                            data = self.conn.read()
+                        if data == "":
+                            return None  # disconnected
+                    except OSError:
+                        return None  # disconnect
+                    self._buffer += data
+                else:
+                    log.error("Unknown socket %s during read()" % (sock))
+
+    def readline(self, timeout=None):
+        """
+        read from connection until newline received
+        """
+        while True:
             if b"\r\n" in self._buffer:
                 data, tmp, self._buffer = self._buffer.partition(b"\r\n")
                 return data.decode(self._codec)
 
-        while True:
             read_sockets, write_sockets, error_sockets = \
                 select.select([self.fd], [], [], self._timeout)
             if read_sockets == []:
@@ -148,49 +182,26 @@ class RemoteConnection:
                 return None
 
             for sock in read_sockets:
-                # if sock == self.p.stdout:
                 if sock == self.fd:
                     try:
-                        if length:
-                            # data = sock.read(length)
-                            data = os.read(sock, length)
-                        else:
-                            # data = sock.read(4096)
-                            data = os.read(sock, 4096)
+                        data = os.read(sock, 4096)
                         if data == "":
                             return None  # disconnected
                     except OSError:
                         return None  # disconnect
-                    # sys.stdout.flush()
                     self._buffer += data
-                    if length is None:
-                        if b"\r\n" in self._buffer:
-                            data, tmp, self._buffer = self._buffer.partition(b"\r\n")
-                            return data.decode(self._codec)
-                    else:
-                        if len(self._buffer) >= length:
-                            data = self._buffer[:length].decode(self._codec)
-                            self._buffer = self._buffer[length:]
-                            return data
                 else:
-                    log.error("Unknown socket %s during read()" % (sock))
-
-    def readline(self, timeout=None):
-        """
-        read from subprocess until newline received
-        """
-        raise CommException("Not implemented")
+                    raise CommException("Unknown socket %s during read()" % (sock))
 
     def write(self, line):
         """
-        Write to subprocess
-        We use select so we don't overrun/block the subprocess
+        Write to connection
+        We use select so we don't overrun/block the connection
         """
         line = line.encode(self._codec)
         while True:
             read_sockets, write_sockets, error_sockets = \
-                select.select([], [self.fd], [], self._timeout)
-            # select.select([], [self.p.stdin], [], self._timeout)
+                select.select([], [self.conn.fd], [], self._timeout)
 
             if write_sockets == []:
                 log.error("write() timeout")
@@ -199,20 +210,21 @@ class RemoteConnection:
 
             for sock in write_sockets:
                 # if sock == self.p.stdin:
-                if sock == self.fd:
+                if sock == self.conn.fd:
                     try:
                         if len(line) < 512:
-                            os.write(sock, line)
+                            self.conn.write(line)
                             return
-                        os.write(sock, line[:512])
+                        self.conn.write(line[:512])
                         line = line[512:]
                     except OSError:
                         return None
                 else:
-                    log.error("Unknown socket %s during write()" % (sock))
+                    raise CommException("Unknown socket %s during write()" % (sock))
 
-    def writeln(self, msg):
-        self.write(msg)
+    def writeln(self, msg=None):
+        if msg:
+            self.write(msg)
         self.write(self.newline)
 
     def flush(self):
@@ -268,20 +280,22 @@ class Expect:
 
         log.debug("expect, match criteria %s" % regexes)
         while True:
-            c = self.transport.read(1, timeout)
-            # c = self._get(timeout)
+            c = self.transport.read(timeout=timeout)
             if c is None:
                 break
             self.before += c
             for key, regex in regexes.items():
                 m = regex.search(self.before)
                 if m:
-                    # self.prev_data = self.before[m.end():]  # save everything after our match
                     self.match = m.group()
                     log.debug("  expect, matched: %s" % self.match)
-                    tmp = self.before.replace("\n", "\\n")
+
+                    tmp = self.before[:m.end()]    # Everthing up to matched text
+                    tmp = tmp.replace("\n", "\\n")
                     tmp = tmp.replace("\r", "\\r")
                     log.debug("  expect, self.before: %s" % tmp)
+                    log.debug("  expect, returned to buffer: '%s'" % self.before[m.end():])
+                    self.transport.unread(self.before[m.end():])  # text after match is returned to transport
                     return key
         raise CommException(1, "  expect, timeout, self.before: %s" % self.before)
 
@@ -292,8 +306,8 @@ class Expect:
         log.debug("expect write: %s" % msg)
         self.transport.write(msg)
 
-    def writeln(self, msg):
-        log.debug("expect writeln: %s" % msg)
+    def writeln(self, msg=None):
+        log.debug("expect writeln: '%s'" % msg)
         self.transport.writeln(msg)
 
 
