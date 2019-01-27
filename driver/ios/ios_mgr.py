@@ -119,7 +119,7 @@ class IOS_Manager(BaseDriver):
         self.wait_for_prompt()
         output = self.em.before.split("\r\n")
         if len(output) > 1:
-            output = output[1:]
+            output = output[1:-1]
         return self.filter_(output, filter_)
 
     # ########################################################################
