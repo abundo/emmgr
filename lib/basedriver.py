@@ -11,6 +11,7 @@ import yaml
 import emmgr.lib.config as config
 import emmgr.lib.log as log
 import emmgr.lib.util as util
+import emmgr.lib.comm as comm
 
 import jinja2
 
@@ -64,7 +65,13 @@ class BaseDriver:
             self._definitions = definitions
 
         self._wait_for_prompt = self.get_definition("config.wait_for_prompt", None)    # cache for performance
-        
+
+        if self.use_ssh:
+            self.method = "ssh"
+        else:
+            self.method="telnet"
+        self.transport = comm.RemoteConnection(timeout=20, method=self.method)
+       
     @classmethod
     def load_definitions(cls, model=None):
         """

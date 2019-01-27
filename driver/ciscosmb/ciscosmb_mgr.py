@@ -40,18 +40,16 @@ class IOS_Manager(BaseDriver):
                 raise comm.CommException(1, "Error waiting for username prompt")
             self.em.writeln(self.username)
 
-        match = self.em.expect(r"assword:")
-        if match is None:
-            raise comm.CommException(1, "Error waiting for password prompt")
-        self.em.writeln(self.password)
+            match = self.em.expect(r"assword:")
+            if match is None:
+                raise comm.CommException(1, "Error waiting for password prompt")
+            self.em.writeln(self.password)
     
-        # Wait for CLI prompt
+        # Go to enable mode
         match = self.em.expect( { "disable": r">", "enable": r"#", 'change': r"change it now"} )
         if match is None:
             raise comm.CommException(1, "Error waiting for CLI prompt")
-        
         if match == 'disable':
-            # Non-privileged mode, goto enable mode
             self.em.writeln("enable")
             match = self.em.expect(r"assword:")
             if match is None:

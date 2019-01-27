@@ -38,12 +38,13 @@ class VRP_Manager(BaseDriver):
                 raise comm.CommException(1, "Error waiting for username prompt")
             self.em.writeln(self.username)
 
-        match = self.em.expect(r"assword:")
-        if match is None:
-            raise comm.CommException(1, "Error waiting for password prompt")
-        self.em.writeln(self.password)
-        self.wait_for_prompt()
+            match = self.em.expect(r"assword:")
+            if match is None:
+                raise comm.CommException(1, "Error waiting for password prompt")
+            self.em.writeln(self.password)
 
+        self.wait_for_prompt()
+        # Go to enable mode
         self.em.writeln("super")
         match = self.em.expect({ "sendpassword": r"assword:", "continue": "3-MANAGE", "ignore": r"Error.*position." })
         if match is None:

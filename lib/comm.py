@@ -8,8 +8,6 @@ Supports ssh and telnet
 import os.path
 import re
 import select
-import tty
-import pty
 import telnetlib
 import socket
 import ssh2.session
@@ -92,8 +90,10 @@ class SSH_Connection:
 
 class RemoteConnection:
     """
-    Run telnet or ssh, with an API compatible with Telnet()
-    This class handles the decode/encode from/to string and bytes
+    Open a telnet or ssh connection
+    This class 
+    - handles the decode/encode between string and bytes
+    - ensures that all newlines follows unix style "\n"
     """
 
     def __init__(self, codec="ascii", timeout=60, method=None, newline="\n"):
@@ -105,28 +105,23 @@ class RemoteConnection:
         self.status = ""
         self.newline = newline
 
-    def connect(self, host, username):
-        if self._method == "ssh":
-            cmd = ["/usr/bin/ssh",
-                   "-l", username,
-                   "-o", "UserKnownHostsFile=/dev/null",
-                   "-o", "StrictHostKeyChecking=no",
-                   str(host)]
-        elif self._method == "telnet":
-            cmd = ["telnet", "-e", "^A", str(host)]
-        else:
-            raise CommException(1, "Unknown connection method %s" % self.method)
+    def connect(self, host, port=None, username=None, password=None):
+        try:
+            if self._method == "ssh":
+                self.conn = SSH_Connection(host, port=port, username=username, password=password)
 
-        self.pid, self.fd = pty.fork()
-        if self.pid == 0:
-            os.execvp(cmd[0], cmd)  # replace process
-            os._exit(1)             # fail to execv
+            elif self._method == "telnet":
+                self.conn = Telnet_Connection(host, port=port)
 
-        tty.setraw(self.fd)         # Disable echo on input
+            else:
+                raise CommException(1, "Unknown connection method %s" % self.method)
+        except CommException as err:
+            return False
+
         return True
 
     def disconnect(self):
-        os.close(self.fd)
+        self.conn.close()
 
     def unread(self, data):
         """

@@ -38,15 +38,15 @@ class ZXROS_Manager(BaseDriver):
                 raise comm.CommException(1, "Error waiting for username prompt")
             self.em.writeln(self.username)
 
-        match = self.em.expect(r"assword:")
-        if match is None:
-            raise comm.CommException(1, "Error waiting for password prompt")
-        self.em.writeln(self.password)
+            match = self.em.expect(r"assword:")
+            if match is None:
+                raise comm.CommException(1, "Error waiting for password prompt")
+            self.em.writeln(self.password)
         
+        # Go to enable mode
         match = self.em.expect(">")
         if match is None:
             raise comm.CommException(1, "Error waiting for prompt after login")
-
         self.em.writeln("enable")
         match = self.em.expect({ "sendpassword": r"assword:" })
         if match is None:
