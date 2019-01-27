@@ -398,7 +398,7 @@ class IBOS_Manager(BaseDriver):
                         file_list.append(f)
                 else:
                     file_list.append(f)
-        return sw_list
+        return file_list
 
     def file_copy_to(self, mgr=None, filename=None, dest_filename=None, callback=None):
         """
