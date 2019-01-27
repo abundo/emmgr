@@ -258,11 +258,8 @@ class IBOS_Manager(BaseDriver):
         """
         raise ElementException("Not implemented")
         
-    def interface_set_admin_state(self, interface=None, enabled=None):
-        """
-        Set the interface admin state
-        """
-        raise ElementException("Not implemented")
+    # use default method
+    # def interface_set_admin_state(self, interface=None, enabled=None):
         
     # ########################################################################
     # Topology
