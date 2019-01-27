@@ -96,18 +96,21 @@ class CLI_run(BaseCLI):
         super().add_arguments()
         self.parser.add_argument('-c', '--command',
                                  required=True,
+                                 action="append",
                                  help='Command to run',
                                  )
 
     def run(self):
         super().run()
-        lines = self.mgr.run(cmd=self.args.command)
-        if lines:
-            #print("Output from command:", self.args.command)
-            for line in lines:
-                print("%s" % line)
-        else:
-            print("No output")
+        for cmd in self.args.command:
+            log.debug("cmd: %s" % cmd)
+            lines = self.mgr.run(cmd=cmd)
+            if lines:
+                ix = 0
+                for line in lines:
+                    #print("%d %s" % (ix, line))
+                    print("%s" % (line))
+                    ix += 1
 
 
 # ########################################################################
