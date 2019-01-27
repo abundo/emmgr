@@ -72,19 +72,6 @@ class IBOS_Manager(BaseDriver):
             self.em = None
             self.transport.disconnect()
             self.transport = None
-            
-    def run(self, cmd=None, filter_=None, callback=None):
-        """
-        Run a command on element
-        returns a list with configuration lines, optionally filtering lines with a regex
-        """
-        self.connect()
-        self.em.writeln(cmd)
-        self.wait_for_prompt()
-        output = self.em.before.split("\r\n")
-        if len(output) > 1:
-            output = output[1:-1]
-        return self.filter_(output, filter_)
 
     def reload(self, save_config=True, callback=None):
         """
@@ -103,6 +90,20 @@ class IBOS_Manager(BaseDriver):
         self.em = None
         self.transport.disconnect()
         self.transport = None
+
+    def run(self, cmd=None, filter_=None, timeout=None, callback=None):
+        """
+        Run a command on element
+        returns a list with configuration lines, optionally filtering lines with a regex
+        """
+        self.connect()
+        log.debug("------------------- run() -------------------")
+        self.em.writeln(cmd)
+        self.wait_for_prompt()
+        output = self.em.before.split("\r\n")
+        if len(output) > 1:
+           output = output[1:-1]
+        return self.filter_(output, filter_)
 
     def license_get(self):
         # Check if there is a license
