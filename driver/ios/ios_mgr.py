@@ -126,10 +126,10 @@ class IOS_Manager(BaseDriver):
     # Configuration
     # ########################################################################
 
-    def wait_for_prompt(self):
-        log.debug("------------------- wait_for_prompt() -------------------")
-        match = self.em.expect(r"#")
-        return match
+    # def wait_for_prompt(self):
+    #     log.debug("------------------- wait_for_prompt() -------------------")
+    #     match = self.em.expect(r"#")
+    #     return match
 
     def configure(self, config_lines, save_running_config=False, callback=None):
         """Reconfigure device"""
