@@ -137,9 +137,7 @@ class IOS_Manager(BaseDriver):
         log.debug("------------------- configure() -------------------")
         config_lines = self.str_to_lines(config_lines)
         self.em.writeln("configure terminal")
-        match = self.em.expect(".*Z\.")
-        if match is None:
-            raise comm.CommException(1, "Error Could not enter configuration mode")
+        self.wait_for_prompt()
         for config_line in config_lines:
             self.em.writeln(config_line)
         self.em.writeln("end")
