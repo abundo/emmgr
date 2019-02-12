@@ -124,13 +124,11 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
     # Configuration
     # ########################################################################
 
-    # def wait_for_prompt(self):
-    #     log.debug("------------------- wait_for_prompt() -------------------")
-    #     match = self.em.expect(r"#")
-    #     return match
 
     def configure(self, config_lines, save_running_config=False, callback=None):
-        """Reconfigure device"""
+        """
+        Reconfigure device
+        """
         self.connect()
         log.debug("------------------- configure() -------------------")
         config_lines = self.str_to_lines(config_lines)
