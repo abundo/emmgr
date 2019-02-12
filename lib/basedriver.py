@@ -70,7 +70,7 @@ class BaseDriver:
             self.method = "ssh"
         else:
             self.method="telnet"
-        self.transport = comm.RemoteConnection(timeout=20, method=self.method)
+        self.transport = comm.RemoteConnection(timeout=10, method=self.method)
        
     @classmethod
     def load_definitions(cls, model=None):
