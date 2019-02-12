@@ -36,24 +36,24 @@ class IBOS_Manager(emmgr.lib.basedriver.BaseDriver):
         if not self.use_ssh:
             match = self.em.expect(r"sername:")
             if match is None:
-                raise comm.CommException(1, "Error waiting for username prompt")
+                raise self.ElementException("Error waiting for username prompt")
             self.em.writeln(self.username)
 
             match = self.em.expect( { "password": r"password:", "disable": r">"} )
             if match is None:
-                raise comm.CommException(1, "Error waiting for password prompt")
+                raise self.ElementException("Error waiting for password prompt")
             self.em.writeln(self.password)
             self.em.before = self.em.before[:-1]
 
         # Go to enable mode
         match = self.em.expect( { "disable": r">", "enable": r"# "} )
         if match is None:
-            raise comm.CommException(1, "Error waiting for CLI prompt")
+            raise self.ElementException("Error waiting for CLI prompt")
         if match == 'disable':
             self.em.writeln("enable")
             match = self.em.expect(r"assword:")
             if match is None:
-                raise comm.CommException(1, "Error waiting for prompt after enable")
+                raise self.ElementException("Error waiting for prompt after enable")
             self.em.writeln(self.enable_password)
             self.wait_for_prompt()
             
@@ -118,15 +118,15 @@ class IBOS_Manager(emmgr.lib.basedriver.BaseDriver):
     def license_set(self, url=None, save_config=True, reload=None, callback=None):
         lic = self.license_get()
         if lic:
-            raise ElementException("Element already has a license of type '%s'" % lic)
+            raise self.ElementException("Element already has a license of type '%s'" % lic)
 
         # Get MAC address
         config_lines = self.run(cmd="show version", filter_="Base MAC address")
         if len(config_lines) < 1:
-            raise ElementException("Cannot find system MAC address")
+            raise self.ElementException("Cannot find system MAC address")
         tmp = config_lines[0].split(":")
         if len(tmp) < 2:
-            raise ElementException("Cannot find system MAC address")
+            raise self.ElementException("Cannot find system MAC address")
         mac = tmp[1].strip()
 
         # Fetch the license text
@@ -142,7 +142,7 @@ class IBOS_Manager(emmgr.lib.basedriver.BaseDriver):
             c.close()
             license_text = buffer.getvalue().decode()
         except pycurl.error as err:
-            raise ElementException("Error reading license file from %s: %s" % (url, err))
+            raise self.ElementException("Error reading license file from %s: %s" % (url, err))
             
         # license_text = license_text.replace("\r\n", "\n")
                     
@@ -157,7 +157,7 @@ class IBOS_Manager(emmgr.lib.basedriver.BaseDriver):
         # Verify that license is in place
         lic = self.license_get()
         if lic is None:
-            raise ElementException("Error: Could not add license to element")
+            raise self.ElementException("Error: Could not add license to element")
         
         print("reload", reload, "save_config", save_config)
         if reload:
@@ -178,12 +178,12 @@ class IBOS_Manager(emmgr.lib.basedriver.BaseDriver):
         self.em.writeln("configure terminal")
         match = self.em.expect("\(config\)#")
         if match is None:
-            raise comm.CommException(1, "Error Could not enter configuration mode")
+            raise self.ElementException("Error Could not enter configuration mode")
         for config_line in config_lines:
             self.em.writeln(config_line)
             match = self.em.expect("\)#")
             if match is None:
-                raise comm.CommException(1, "Error waiting for next configuration prompt")
+                raise self.ElementException("Error waiting for next configuration prompt")
         self.em.writeln("end")
         self.wait_for_prompt()
         if save_running_config:
@@ -223,7 +223,7 @@ class IBOS_Manager(emmgr.lib.basedriver.BaseDriver):
         """
         Copy config_lines to startup_config
         """
-        raise comm.CommException(1, "Not implemented")
+        raise self.ElementException("Not implemented")
         
     # ########################################################################
     # Interface management
@@ -255,7 +255,7 @@ class IBOS_Manager(emmgr.lib.basedriver.BaseDriver):
         """
         Returns the interface admin state
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
         
     # use default method
     # def interface_set_admin_state(self, interface=None, enabled=None):
@@ -265,7 +265,7 @@ class IBOS_Manager(emmgr.lib.basedriver.BaseDriver):
     # ########################################################################
 
     def l2_peers(self):
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
     # ########################################################################
     # VLAN management
@@ -368,7 +368,7 @@ class IBOS_Manager(emmgr.lib.basedriver.BaseDriver):
     #     """
     #     Set native VLAN on an Interface
     #     """
-    #     raise ElementException("Not implemented")
+    #     raise self.ElementException("Not implemented")
         
     # ########################################################################
     # File management
@@ -413,7 +413,7 @@ class IBOS_Manager(emmgr.lib.basedriver.BaseDriver):
         self.em.writeln(cmd)
         match = self.em.expect(r"Destination filename.*\?")
         if match is None:
-            raise comm.CommException(1, "Unexpected output %s" % self.em.match)
+            raise self.ElementException("Unexpected output %s" % self.em.match)
         self.em.writeln("")
 
         match = self.em.expect({
@@ -421,7 +421,7 @@ class IBOS_Manager(emmgr.lib.basedriver.BaseDriver):
                             "overwrite": r"Do you want to over write\? \[confirm\]",
                             })
         if match is None:
-            raise comm.CommException(1, "File transfer did not start")
+            raise self.ElementException("File transfer did not start")
         if match == "overwrite":
             self.em.writeln("y")
 
@@ -435,7 +435,7 @@ class IBOS_Manager(emmgr.lib.basedriver.BaseDriver):
                                 "done":    r'Transferred.*\r\n', 
                                 "error":   r"%Error.*\r\n"})
             if match is None:
-                raise comm.CommException(1, "File transfer finished incorrect, self.before=%s" % self.em.before )
+                raise self.ElementException("File transfer finished incorrect, self.before=%s" % self.em.before )
             if match == "copying":
                 if callback is not None:
                     callback(block)     # todo, use match
@@ -445,20 +445,20 @@ class IBOS_Manager(emmgr.lib.basedriver.BaseDriver):
                     callback("Copying done, copied %s block" % block)
                 break
             elif match == "error":
-                raise comm.CommException(1, "File transfer did not start. search buffer: %s" % self.em.before)
+                raise self.ElementException("File transfer did not start. search buffer: %s" % self.em.before)
         self.wait_for_prompt()
 
     def file_copy_from(self, mgr=None, filename=None, callback=None):
         """
         Copy file from element
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
     def file_delete(self, filename, callback=None):
         """
         Delete file on element
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
     # ########################################################################
     # Software management
@@ -471,12 +471,12 @@ class IBOS_Manager(emmgr.lib.basedriver.BaseDriver):
         self.connect()
         lines = self.run("show boot")
         if len(lines) < 1:
-            raise ElementException("Can't find boot image")
+            raise self.ElementException("Can't find boot image")
         tmp = lines[0].split("=")
         if len(tmp) < 2:
-            raise ElementException("Can't find boot image")
+            raise self.ElementException("Can't find boot image")
         if tmp[0] != 'boot':
-            raise ElementException("Can't find boot image")
+            raise self.ElementException("Can't find boot image")
         return tmp[1]
 
     def sw_list(self, filter_=None, callback=None):
@@ -515,7 +515,7 @@ class IBOS_Manager(emmgr.lib.basedriver.BaseDriver):
                                 "done":    r'Transferred.*\r\n', 
                                 "error":   r"%Error.*\r\n"})
             if match is None:
-                raise ElementException(1, "File transfer finished incorrectly, self.before=%s" % self.em.before )
+                raise self.ElementException("File transfer finished incorrectly, self.before=%s" % self.em.before )
             if match == "copying":
                 if callback is not None:
                     callback(block)     # todo, use match
@@ -525,17 +525,16 @@ class IBOS_Manager(emmgr.lib.basedriver.BaseDriver):
                     callback("Copying done, copied %s block" % block)
                 break
             elif match == "error":
-                raise ElementException(1, "File transfer did not start. search buffer: %s" % self.em.before)
+                raise self.ElementException("File transfer did not start. search buffer: %s" % self.em.before)
         self.wait_for_prompt()
 
     def sw_copy_from(self, mgr=None, filename=None, callback=None):
         """Copy software from the element"""
-        raise comm.CommException(1, "Not implemented")
+        raise self.ElementException("Not implemented")
         self.connect()
         if not self.exist(filename):
-            raise comm.CommException(1, "File %s does not exist on element" % filename)
-        raise comm.CommException(1, "Not implemented")
-
+            raise self.ElementException("File %s does not exist on element" % filename)
+        
     def sw_set_boot(self, filename, callback=None):
         """
         Check if filename exist in element
@@ -543,15 +542,15 @@ class IBOS_Manager(emmgr.lib.basedriver.BaseDriver):
         """
         self.connect()
         if not self.sw_exist(filename):
-            raise ElementException(1, "Error cant change boot software, filename %s does not exist" % filename)
+            raise self.ElementException("Error cant change boot software, filename %s does not exist" % filename)
 
         # Get current boot sw
         lines = self.run("show boot")
         if len(lines) < 1:
-            raise ElementException("Can't find current bootfile")
+            raise self.ElementException("Can't find current bootfile")
         tmp = lines[0].split("=")
         if len(tmp) != 2:
-            raise ElementException("Can't find current bootfile")
+            raise self.ElementException("Can't find current bootfile")
         if filename == tmp[1]:
             return True
 
@@ -565,11 +564,11 @@ class IBOS_Manager(emmgr.lib.basedriver.BaseDriver):
         """
         self.connect()
         if not self.sw_exist(filename):
-            raise ElementException(1, "File %s not found in flash" % filename)
+            raise self.ElementException("File %s not found in flash" % filename)
         
         boot_firmware = self.sw_get_boot()
         if boot_firmware == filename:
-            raise ElementException(1, "Cannot remove file %s, it is used during boot" % filename)
+            raise self.ElementException("Cannot remove file %s, it is used during boot" % filename)
 
         cmd = "delete flash:%s" % filename
         self.run(cmd)
@@ -584,7 +583,7 @@ class IBOS_Manager(emmgr.lib.basedriver.BaseDriver):
         deleted = []
 
         if bootimg not in files:
-            raise ElementException("Boot image does not exist in flash")
+            raise self.ElementException("Boot image does not exist in flash")
         
         for f in files:
             if f != bootimg:
@@ -620,12 +619,12 @@ class IBOS_Manager(emmgr.lib.basedriver.BaseDriver):
         cmd = 'show ver | include "^Bootloader"'
         lines = self.run(cmd)
         if len(lines) != 1:
-            raise ElementException(1, "Cannot find bootloader in use: %s" % lines)
+            raise self.ElementException("Cannot find bootloader in use: %s" % lines)
         
         # "Bootloader version: msboot-ms4k-4.0.3-R"
         tmp = lines[0].split(':')
         if len(tmp) != 2:
-            raise ElementException(1, "Cannot find bootloader in use: %s" % tmp)
+            raise self.ElementException("Cannot find bootloader in use: %s" % tmp)
         return tmp[1].strip()
         
 
