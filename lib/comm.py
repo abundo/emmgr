@@ -25,14 +25,21 @@ class Telnet_Connection:
     """
     A Wrapper for a telnet connection
     """
-    def __init__(self, host, port=None, username=None, password=None):
+    def __init__(self, host, port=None, username=None, password=None, timeout=None):
         """
         Open a telnet connection
         """
-        if port is None: port = 23
-        self.tn = telnetlib.Telnet(str(host), port)
+        if port is None: 
+            port = 23
+        try:
+            self.tn = telnetlib.Telnet(host=str(host), port=port, timeout=timeout)
+        except socket.timeout as err:
+            raise CommException(1, "Timeout connecting to %s" % host)
         self.fd = self.tn.fileno()
     
+    def get_socket(self):
+        return self.tb.get_socket()
+
     def read(self, length=None, timeout=None):
         return self.tn.read_eager()
     
@@ -44,13 +51,15 @@ class SSH_Connection:
     """
     A Wrapper for a SSH connection
     """
-    def __init__(self, host, port=None, username=None, password=None):
+    def __init__(self, host, port=None, username=None, password=None, timeout=None):
         """
         Open a SSH connection and authenticate
         """
         if port is None:
             port = 22
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if timeout:
+            self.sock.settimeout(timeout)
         log.debug("------------------- socket.connect(%s) -------------------" % host)
         try:
             self.sock.connect((str(host), port))
@@ -58,6 +67,8 @@ class SSH_Connection:
             log.error("socket.connect() host %s, err %s" % (host, err))
 
         self.ssh_session = ssh2.session.Session()
+        if timeout:
+            self.ssh_session.set_timeout(timeout * 1000)   # In milliseconds
         log.debug("------------------- ssh_session.handshake(%s) -------------------" % host)
         try:
             self.ssh_session.handshake(self.sock)
@@ -106,19 +117,14 @@ class RemoteConnection:
         self.newline = newline
 
     def connect(self, host, port=None, username=None, password=None):
-        try:
-            if self._method == "ssh":
-                self.conn = SSH_Connection(host, port=port, username=username, password=password)
+        if self._method == "ssh":
+            self.conn = SSH_Connection(host, port=port, username=username, password=password, timeout=self._timeout)
 
-            elif self._method == "telnet":
-                self.conn = Telnet_Connection(host, port=port)
+        elif self._method == "telnet":
+            self.conn = Telnet_Connection(host, port=port, timeout=self._timeout)
 
-            else:
-                raise CommException(1, "Unknown connection method %s" % self.method)
-        except CommException as err:
-            return False
-
-        return True
+        else:
+            raise CommException(1, "Unknown connection method %s" % self.method)
 
     def disconnect(self):
         self.conn.close()
