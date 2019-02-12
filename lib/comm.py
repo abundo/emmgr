@@ -38,7 +38,7 @@ class Telnet_Connection:
         self.fd = self.tn.fileno()
     
     def get_socket(self):
-        return self.tb.get_socket()
+        return self.tn.get_socket()
 
     def read(self, length=None, timeout=None):
         return self.tn.read_eager()
