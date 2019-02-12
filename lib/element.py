@@ -50,8 +50,11 @@ class Element:
         
         if ipaddr_mgmt is None:
             # Find out management IP address through DNS
-            addr = socket.gethostbyname(hostname)
-            kwargs['ipaddr_mgmt'] = addr
+            try:
+                addr = socket.gethostbyname(hostname)
+                kwargs['ipaddr_mgmt'] = addr
+            except socket.gaierror as err:
+                raise self.Exception("Cannot get IP address for %s" % hostname)
 
         # Copy in some defaults from config, if not specified
         for key, attr in config.em.scriptaccount.items():
