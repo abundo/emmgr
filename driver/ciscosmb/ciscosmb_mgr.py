@@ -7,7 +7,6 @@ import sys
 import re
 from orderedattrdict import AttrDict
 
-import emmgr.lib.config as config
 import emmgr.lib.log as log
 import emmgr.lib.comm as comm
 
