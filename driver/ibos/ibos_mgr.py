@@ -10,11 +10,10 @@ from orderedattrdict import AttrDict
 
 import emmgr.lib.log as log
 import emmgr.lib.comm as comm
+import emmgr.lib.basedriver
 
-from emmgr.lib.basedriver import BaseDriver, ElementException
 
-
-class IBOS_Manager(BaseDriver):
+class IBOS_Manager(emmgr.lib.basedriver.BaseDriver):
     
     def __init__(self, **kwargs):
         if not hasattr(self, 'model'):
