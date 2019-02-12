@@ -412,10 +412,8 @@ class VRP_Manager(emmgr.lib.basedriver.BaseDriver):
             raise self.ElementException("Unexpected state, can't find command that selects operating system (2)")
         filename = line[p+1:-1]
         if filename[0] == "/":
-            filename = filename[1:]
-        # print("line", line)
-        # print("filename", filename)
-        
+            filename = filename[1:] 
+             
         if filename in files:
             keep[filename] = ""
         else:
