@@ -147,7 +147,10 @@ class BaseDriver:
         
     def connect(self):
         log.debug("------------------- connect(%s) -------------------" % self.hostname)
-        self.transport.connect(self.hostname, port=self.port, username=self.username, password=self.password)
+        try:
+            self.transport.connect(self.hostname, port=self.port, username=self.username, password=self.password)
+        except comm.CommException as err:
+            raise self.ElementException(err)
         self.em = comm.Expect(self.transport)
 
     def disconnect(self):
