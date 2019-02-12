@@ -85,9 +85,12 @@ class CLI_reload(BaseCLI):
                                  default=False)
 
     def run(self):
-        super().run()
-        res = self.mgr.reload(save_config=self.args.save_config)
-        print("Result :", res)
+        try:
+            super().run()
+            res = self.mgr.reload(save_config=self.args.save_config)
+            print("Result :", res)
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
 
 
 class CLI_run(BaseCLI):
@@ -101,16 +104,19 @@ class CLI_run(BaseCLI):
                                  )
 
     def run(self):
-        super().run()
-        for cmd in self.args.command:
-            log.debug("cmd: %s" % cmd)
-            lines = self.mgr.run(cmd=cmd)
-            if lines:
-                ix = 0
-                for line in lines:
-                    #print("%d %s" % (ix, line))
-                    print("%s" % (line))
-                    ix += 1
+        try:
+            super().run()
+            for cmd in self.args.command:
+                log.debug("cmd: %s" % cmd)
+                lines = self.mgr.run(cmd=cmd)
+                if lines:
+                    ix = 0
+                    for line in lines:
+                        #print("%d %s" % (ix, line))
+                        print("%s" % (line))
+                        ix += 1
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
 
 
 # ########################################################################
@@ -138,45 +144,57 @@ class CLI_configure(BaseCLI):
         if not (self.args.config or self.args.file):
             print("Error: You need to specify config or file")
             sys.exit(1)
-        super().run()
-        if self.args.file:
-            lines = []
-            for line in open(self.args.file):
-                    lines.append(line.strip())
-        else:
-            lines = self.args.config
-        res =  self.mgr.configure(config_lines=lines, save_running_config=self.args.save_running_config)
-        print("Result :", res)
+        try:
+            super().run()
+            if self.args.file:
+                lines = []
+                for line in open(self.args.file):
+                        lines.append(line.strip())
+            else:
+                lines = self.args.config
+            res =  self.mgr.configure(config_lines=lines, save_running_config=self.args.save_running_config)
+            print("Result :", res)
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
 
 
 class CLI_get_running_config(BaseCLI):
 
     def run(self):
-        super().run()
-        lines = self.mgr.get_running_config()
-        print("Running configuration:")
-        if lines:
-            for line in lines:
-                print(line)
-        else:
-            print("No output")
+        try:
+            super().run()
+            lines = self.mgr.get_running_config()
+            print("Running configuration:")
+            if lines:
+                for line in lines:
+                    print(line)
+            else:
+                print("No output")
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
 
 
 class CLI_save_running_config(BaseCLI):
 
     def run(self):
-        super().run()
-        res = self.mgr.save_running_config()
-        print("Result :", res)
+        try:
+            super().run()
+            res = self.mgr.save_running_config()
+            print("Result :", res)
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
 
 
 class CLI_set_startup_config(BaseCLI):
 
     def run(self):
-        super().run()
-        print("Not implemented")
-        #res = self.mgr.save_running_config()
-        #print("Result :", res)
+        try:
+            super().run()
+            print("Not implemented")
+            #res = self.mgr.save_running_config()
+            #print("Result :", res)
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
 
 # ########################################################################
 # Interface management
@@ -192,9 +210,12 @@ class CLI_interface_clear_config(BaseCLI):
                                  )
 
     def run(self):
-        super().run()
-        res = self.mgr.interface_clear_config(interface=self.args.interface)
-        print("Result :", res)
+        try:
+            super().run()
+            res = self.mgr.interface_clear_config(interface=self.args.interface)
+            print("Result :", res)
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
 
 
 class CLI_interface_get_admin_state(BaseCLI):
@@ -206,9 +227,12 @@ class CLI_interface_get_admin_state(BaseCLI):
                                  )
 
     def run(self):
-        super().run()
-        res = self.mgr.interface_get_admin_state(interface=self.args.interface)
-        print("Result :", res)
+        try:
+            super().run()
+            res = self.mgr.interface_get_admin_state(interface=self.args.interface)
+            print("Result :", res)
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
 
 
 class CLI_interface_set_admin_state(BaseCLI):
@@ -226,10 +250,13 @@ class CLI_interface_set_admin_state(BaseCLI):
                                  )
 
     def run(self):
-        super().run()
-        res = self.mgr.interface_set_admin_state(interface=self.args.interface,
-                                                 state=self.args.state)
-        print("Result :", res)
+        try:
+            super().run()
+            res = self.mgr.interface_set_admin_state(interface=self.args.interface,
+                                                    state=self.args.state)
+            print("Result :", res)
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
 
 
 # ########################################################################
@@ -239,10 +266,13 @@ class CLI_interface_set_admin_state(BaseCLI):
 class CLI_l2_peers(BaseCLI):
 
     def run(self):
-        super().run()
-        peers = self.mgr.l2_peers()
-        for peer in peers:
-            print("peer", peer)
+        try:
+            super().run()
+            peers = self.mgr.l2_peers()
+            for peer in peers:
+                print("peer", peer)
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
 
 
 # ########################################################################
@@ -256,10 +286,13 @@ class CLI_vlan_get(BaseCLI):
         List all VLANs in the element
         Returns a dict, key is vlan ID
         """
-        super().run()
-        vlans = self.mgr.vlan_get()
-        for vlan in vlans.values():
-            print("    %5d  %s" % (vlan.id, vlan.name))
+        try:
+            super().run()
+            vlans = self.mgr.vlan_get()
+            for vlan in vlans.values():
+                print("    %5d  %s" % (vlan.id, vlan.name))
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
     
 
 class CLI_vlan_create(BaseCLI):
@@ -277,10 +310,13 @@ class CLI_vlan_create(BaseCLI):
         """
         Create a VLAN in the element
         """
-        super().run()
-        res = self.mgr.vlan_create(vlan=self.args.vlan,
-                                   name=self.args.name)
-        print("res", res)
+        try:
+            super().run()
+            res = self.mgr.vlan_create(vlan=self.args.vlan,
+                                    name=self.args.name)
+            print("res", res)
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
     
 
 class CLI_vlan_delete(BaseCLI):
@@ -295,9 +331,12 @@ class CLI_vlan_delete(BaseCLI):
         """
         Delete a VLAN in the element
         """
-        super().run()
-        res = self.mgr.vlan_delete(vlan=self.args.vlan)
-        print("res", res)
+        try:
+            super().run()
+            res = self.mgr.vlan_delete(vlan=self.args.vlan)
+            print("res", res)
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
     
 
 class CLI_vlan_interface_get(BaseCLI):
@@ -311,11 +350,15 @@ class CLI_vlan_interface_get(BaseCLI):
         Get all VLANs on an interface
         Returns a dict, key is vlan ID
         """
-        super().run()
-        vlans = self.mgr.vlan_interface_get(interface=self.args.interface)
-        for id, tagged in vlans.items():
-            print("    %5d  %s" % (id, tagged))
+        try:
+            super().run()
+            vlans = self.mgr.vlan_interface_get(interface=self.args.interface)
+            for id, tagged in vlans.items():
+                print("    %5d  %s" % (id, tagged))
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
         
+
 class CLI_vlan_interface_create(BaseCLI):
 
     def add_arguments(self):
@@ -333,12 +376,16 @@ class CLI_vlan_interface_create(BaseCLI):
         """
         Create a VLAN to an interface
         """
-        super().run()
-        res = self.mgr.vlan_interface_create(interface=self.args.interface, 
-                                             vlan=self.args.vlan,
-                                             untagged=self.args.untagged)
-        print("res", res)                                        
-    
+        try:
+            super().run()
+            res = self.mgr.vlan_interface_create(interface=self.args.interface, 
+                                                vlan=self.args.vlan,
+                                                untagged=self.args.untagged)
+            print("res", res)
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
+
+
 class CLI_vlan_interface_delete(BaseCLI):
 
     def add_arguments(self):
@@ -351,10 +398,13 @@ class CLI_vlan_interface_delete(BaseCLI):
         """
         Delete a VLAN from an interface
         """
-        super().run()
-        res = self.mgr.vlan_interface_delete(interface=self.args.interface, 
-                                             vlan=self.args.vlan)
-        print("res", res)                                        
+        try:
+            super().run()
+            res = self.mgr.vlan_interface_delete(interface=self.args.interface, 
+                                                vlan=self.args.vlan)
+            print("res", res)
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
     
 
 class CLI_vlan_interface_set_native(BaseCLI):
@@ -370,8 +420,11 @@ class CLI_vlan_interface_set_native(BaseCLI):
         """
         Set native VLAN on an Interface
         """
-        super().run()
-        raise self.mgr.ElementException("Not implemented")
+        try:
+            super().run()
+            print("Error: Not implemented")
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
 
 
 # ########################################################################
@@ -388,17 +441,23 @@ class CLI_sw_exist(BaseCLI):
                                  )
 
     def run(self):
-        super().run()
-        res = self.mgr.sw_exist(self.args.filename)
-        print("Does firmware %s exist ? " % self.args.filename, res)
+        try:
+            super().run()
+            res = self.mgr.sw_exist(self.args.filename)
+            print("Does firmware %s exist ? " % self.args.filename, res)
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
 
 
 class CLI_sw_get_boot(BaseCLI):
 
     def run(self):
-        super().run()
-        res = self.mgr.sw_get_boot()
-        print("System will boot with firmware:", res)
+        try:
+            super().run()
+            res = self.mgr.sw_get_boot()
+            print("System will boot with firmware:", res)
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
 
 
 class CLI_sw_list(BaseCLI):
@@ -410,11 +469,14 @@ class CLI_sw_list(BaseCLI):
                             default=None)
 
     def run(self):
-        super().run()
-        sw_list = self.mgr.sw_list(filter_=self.args.filter)
-        print("Softare on element:")
-        for sw in sw_list:
-            print("   ", sw)
+        try:
+            super().run()
+            sw_list = self.mgr.sw_list(filter_=self.args.filter)
+            print("Softare on element:")
+            for sw in sw_list:
+                print("   ", sw)
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
     
 
 class CLI_sw_copy_to(BaseCLI):
@@ -435,13 +497,16 @@ class CLI_sw_copy_to(BaseCLI):
                                  )
 
     def run(self):
-        super().run()
-        res = self.mgr.sw_copy_to(mgr=self.args.server, 
-                                 filename=self.args.filename, 
-                                 dest_filename=self.args.dest_filename,
-                                 callback=self.callback,
-                                 )
-        print(res)
+        try:
+            super().run()
+            res = self.mgr.sw_copy_to(mgr=self.args.server, 
+                                    filename=self.args.filename, 
+                                    dest_filename=self.args.dest_filename,
+                                    callback=self.callback,
+                                    )
+            print(res)
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
 
     def callback(self, status):
         print("   ", status)
@@ -463,8 +528,8 @@ class CLI_sw_set_boot(BaseCLI):
             super().run()
             res = self.mgr.sw_set_boot(self.args.filename)
             print("Set firmware to boot:", res)
-        except comm.CommException as e:
-            print("Error, %s" % (e.message))
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
 
 
 class CLI_sw_delete(BaseCLI):
@@ -480,8 +545,8 @@ class CLI_sw_delete(BaseCLI):
             super().run()
             res = self.mgr.sw_delete(self.args.filename)
             print("File deleted:", res)
-        except comm.CommException as e:
-            print("Error, %s" % (e.message))
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
 
 
 class CLI_sw_delete_unneeded(BaseCLI):
@@ -491,8 +556,8 @@ class CLI_sw_delete_unneeded(BaseCLI):
             super().run()
             deleted = self.mgr.sw_delete_unneeded()
             print("Files deleted: ", deleted)
-        except comm.CommException as e:
-            print("Error, %s" % (e.message))
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
 
 
 class CLI_sw_upgrade(BaseCLI):
@@ -508,14 +573,17 @@ class CLI_sw_upgrade(BaseCLI):
                                  help='Server to copy from/to',
                                  )
     def run(self):
-        super().run()
-        if self.args.filename is None:
-            raise comm.CommException(1, "Must specify filename")
-        res = self.mgr.sw_upgrade(mgr=self.args.server, 
-                                 filename=self.args.filename,
-                                 callback=self.callback,
-                                 )
-        print("sw_upgrade status:", res)
+        try:
+            super().run()
+            if self.args.filename is None:
+                raise self.ElementException("Must specify filename")
+            res = self.mgr.sw_upgrade(mgr=self.args.server, 
+                                    filename=self.args.filename,
+                                    callback=self.callback,
+                                    )
+            print("sw_upgrade status:", res)
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
 
     def callback(self, status):
         print("   ", status)
@@ -528,8 +596,8 @@ class CLI_get_bootloader(BaseCLI):
             super().run()
             bootloader = self.mgr.get_bootloader()
             print("Bootloader in use: '%s'" % bootloader)
-        except comm.CommException as e:
-            print("Error, %s" % (e.message))
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
 
 
 class CLI_set_bootloader(BaseCLI):
@@ -546,12 +614,15 @@ class CLI_set_bootloader(BaseCLI):
                                  )
 
     def run(self):
-        super().run()
-        res = self.mgr.set_bootloader(mgr=self.args.server, 
-                                 filename=self.args.filename, 
-                                 callback=self.callback,
-                                 )
-        print(res)
+        try:
+            super().run()
+            res = self.mgr.set_bootloader(mgr=self.args.server, 
+                                    filename=self.args.filename, 
+                                    callback=self.callback,
+                                    )
+            print(res)
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
         
     def callback(self, status):
         print("   ", status)
@@ -568,8 +639,8 @@ class CLI_license_get(BaseCLI):
             super().run()
             res =  self.mgr.license_get()
             print("Result :", res)
-        except self.mgr.ElementException as err:
-            print(err)
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
 
 
 class CLI_license_set(BaseCLI):
@@ -587,13 +658,12 @@ class CLI_license_set(BaseCLI):
                                  )
 
     def run(self):
-        
         try:
             super().run()
             res =  self.mgr.license_set(url=self.args.url, reload=self.args.reload)
             print("Result :", res)
-        except self.mgr.ElementException as err:
-            print(err)
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
 
 
 def main(mgr_cls=None):
