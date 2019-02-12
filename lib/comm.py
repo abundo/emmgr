@@ -7,9 +7,9 @@ Supports ssh and telnet
 
 import os.path
 import re
-import select
 import telnetlib
 import socket
+import selectors
 import ssh2.session
 
 import emmgr.lib.log as log
@@ -86,6 +86,9 @@ class SSH_Connection:
         self.channel.shell()
         self.fd = self.sock.fileno()
 
+    def get_socket(self):
+        return self.sock
+
     def read(self, length=None, timeout=None):
         size, data = self.channel.read(size = length)
         return data
@@ -107,7 +110,7 @@ class RemoteConnection:
     - ensures that all newlines follows unix style "\n"
     """
 
-    def __init__(self, codec="utf8", timeout=60, method=None, newline="\n"):
+    def __init__(self, codec="utf8", timeout=10, method=None, newline="\n"):
         self._codec = codec
         self._timeout = timeout
         self._method = method
@@ -115,6 +118,8 @@ class RemoteConnection:
         self._buffer = b""
         self.status = ""
         self.newline = newline
+        self.selector_r = selectors.DefaultSelector()
+        self.selector_w = selectors.DefaultSelector()
 
     def connect(self, host, port=None, username=None, password=None):
         if self._method == "ssh":
@@ -125,6 +130,9 @@ class RemoteConnection:
 
         else:
             raise CommException(1, "Unknown connection method %s" % self.method)
+        sock = self.conn.get_socket()
+        self.selector_r.register(sock, selectors.EVENT_READ)
+        self.selector_w.register(sock, selectors.EVENT_WRITE)
 
     def disconnect(self):
         self.conn.close()
@@ -151,26 +159,17 @@ class RemoteConnection:
                     self._buffer = b""
                 return data.decode(self._codec)
 
-            read_sockets, write_sockets, error_sockets = \
-                select.select([self.conn.fd], [], [], self._timeout)
-            if read_sockets == []:
-                # timeout
-                return None
-
-            for sock in read_sockets:
-                if sock == self.conn.fd:
-                    try:
-                        if length:
-                            data = self.conn.read(length)
-                        else:
-                            data = self.conn.read()
-                        if data == "":
-                            return None  # disconnected
-                    except OSError:
-                        return None  # disconnect
-                    self._buffer += data
+            events = self.selector_r.select()    # We ignore the event, only one socket
+            try:
+                if length:
+                    data = self.conn.read(length)
                 else:
-                    log.error("Unknown socket %s during read()" % (sock))
+                    data = self.conn.read()
+                if data == "":
+                    return None  # disconnected
+            except OSError:
+                return None  # disconnect
+            self._buffer += data
 
     def readline(self, timeout=None):
         """
@@ -181,23 +180,14 @@ class RemoteConnection:
                 data, tmp, self._buffer = self._buffer.partition(b"\r\n")
                 return data.decode(self._codec)
 
-            read_sockets, write_sockets, error_sockets = \
-                select.select([self.fd], [], [], self._timeout)
-            if read_sockets == []:
-                # timeout
-                return None
-
-            for sock in read_sockets:
-                if sock == self.fd:
-                    try:
-                        data = os.read(sock, 4096)
-                        if data == "":
-                            return None  # disconnected
-                    except OSError:
-                        return None  # disconnect
-                    self._buffer += data
-                else:
-                    raise CommException("Unknown socket %s during read()" % (sock))
+            events = self.selector_r.select()    # We ignore the event, only one socket
+            try:
+                data = os.read(sock, 4096)
+                if data == "":
+                    return None  # disconnected
+            except OSError:
+                return None  # disconnect
+            self._buffer += data
 
     def write(self, line):
         """
@@ -206,27 +196,15 @@ class RemoteConnection:
         """
         line = line.encode(self._codec)
         while True:
-            read_sockets, write_sockets, error_sockets = \
-                select.select([], [self.conn.fd], [], self._timeout)
-
-            if write_sockets == []:
-                log.error("write() timeout")
-                # timeout
+            events = self.selector_w.select()   # We ignore the event, only one socket
+            try:
+                if len(line) < 512:
+                    self.conn.write(line)
+                    return
+                self.conn.write(line[:512])
+                line = line[512:]
+            except OSError:
                 return None
-
-            for sock in write_sockets:
-                # if sock == self.p.stdin:
-                if sock == self.conn.fd:
-                    try:
-                        if len(line) < 512:
-                            self.conn.write(line)
-                            return
-                        self.conn.write(line[:512])
-                        line = line[512:]
-                    except OSError:
-                        return None
-                else:
-                    raise CommException("Unknown socket %s during write()" % (sock))
 
     def writeln(self, msg=None):
         if msg:
