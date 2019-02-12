@@ -34,22 +34,22 @@ class ZXROS_Manager(emmgr.lib.basedriver.BaseDriver):
         if not self.use_ssh:
             match = self.em.expect(r"sername:")
             if match is None:
-                raise comm.CommException(1, "Error waiting for username prompt")
+                raise self.ElementException("Error waiting for username prompt")
             self.em.writeln(self.username)
 
             match = self.em.expect(r"assword:")
             if match is None:
-                raise comm.CommException(1, "Error waiting for password prompt")
+                raise self.ElementException("Error waiting for password prompt")
             self.em.writeln(self.password)
         
         # Go to enable mode
         match = self.em.expect(">")
         if match is None:
-            raise comm.CommException(1, "Error waiting for prompt after login")
+            raise self.ElementException("Error waiting for prompt after login")
         self.em.writeln("enable")
         match = self.em.expect({ "sendpassword": r"assword:" })
         if match is None:
-            raise comm.CommException(1, "Error waiting for prompt after enable")
+            raise self.ElementException("Error waiting for prompt after enable")
         if match is "sendpassword":
             self.em.writeln(self.enable_password)
         self.wait_for_prompt()
@@ -116,7 +116,7 @@ class ZXROS_Manager(emmgr.lib.basedriver.BaseDriver):
         self.em.writeln("configure terminal")
         match = self.wait_for_prompt()
         if match is None:
-            raise comm.CommException(1, "Error Could not enter configuration mode")
+            raise self.ElementException("Error Could not enter configuration mode")
         for config_line in config_lines:
             self.em.writeln(config_line)
         self.em.writeln("end")
@@ -292,8 +292,7 @@ class ZXROS_Manager(emmgr.lib.basedriver.BaseDriver):
         self.em.writeln(cmd)
         match = self.em.expect(r"Destination filename.*\?")
         if match is None:
-            raise comm.CommException(1, "Unexpected output %s" % self.em.match)
-#        self.em.writeln(dest_filename)
+            raise self.ElementException("Unexpected output %s" % self.em.match)
         self.em.writeln("")
 
         match = self.em.expect({
@@ -301,7 +300,7 @@ class ZXROS_Manager(emmgr.lib.basedriver.BaseDriver):
                             "overwrite": r"Do you want to over write\? \[confirm\]",
                             })
         if match is None:
-            raise comm.CommException(1, "File transfer did not start")
+            raise self.ElementException("File transfer did not start")
         if match == "overwrite":
             self.em.writeln("y")
 
@@ -315,7 +314,7 @@ class ZXROS_Manager(emmgr.lib.basedriver.BaseDriver):
                                 "done":    r'bytes copied', 
                                 "error":   r"%Error.*\r\n"})
             if match is None:
-                raise comm.CommException(1, "File transfer finished incorrect, self.before=%s" % self.em.before )
+                raise self.ElementException("File transfer finished incorrect, self.before=%s" % self.em.before )
             if match == "copying":
                 if callback is not None:
                     callback(block)
@@ -327,29 +326,29 @@ class ZXROS_Manager(emmgr.lib.basedriver.BaseDriver):
                     callback("Copying done, copied %s block" % block)
                 break
             elif match == "error":
-                raise comm.CommException(1, "File transfer did not start. search buffer: %s" % self.em.before)
+                raise self.ElementException("File transfer did not start. search buffer: %s" % self.em.before)
         self.wait_for_prompt()
 
     def sw_copy_from(self, mgr=None, filename=None, callback=None):
         """
         Copy file from element
         """
-        raise comm.CommException(1, "Not implemented")
+        raise self.ElementException("Not implemented")
         self.connect()
         log.debug("------------------- sw_copy_from() -------------------")
         if not self.sw_exist(filename):
-            raise comm.CommException(1, "File %s does not exist on element" % filename)
+            raise self.ElementException("File %s does not exist on element" % filename)
 
     def sw_delete(self, filename):
         """
         Delete filename from flash
         status: Todo
         """
-        raise comm.CommException(1, "Not implemented")
+        raise self.ElementException("Not implemented")
         self.connect()
         log.debug("------------------- sw_delete() -------------------")
         if not self.sw_exist(filename):
-            raise comm.CommException(1, "File %s not found in flash" % filename)
+            raise self.ElementException("File %s not found in flash" % filename)
         
         # todo, check so we dont remove the current filename
         # conf = self.getRunningConfig(filter="^boot system flash")
@@ -361,7 +360,7 @@ class ZXROS_Manager(emmgr.lib.basedriver.BaseDriver):
                             "confirm": r"Delete filename.*\?"
                             })
         if match is None:
-            raise comm.CommException(1, "Error deleting filename %s" % filename)
+            raise self.ElementException("Error deleting filename %s" % filename)
         
         if match == "confirm":
             self.em.writeln("")
@@ -370,7 +369,7 @@ class ZXROS_Manager(emmgr.lib.basedriver.BaseDriver):
                     "confirm": "Delete.*\[confirm\]",
                     })
         if match is None:
-            raise comm.CommException(1, "Unexpected response, seach buffer: %s" % self.em.before)
+            raise self.ElementException("Unexpected response, seach buffer: %s" % self.em.before)
 
         self.em.write("y")            # confirm deletion
         self.wait_for_prompt()
@@ -381,7 +380,7 @@ class ZXROS_Manager(emmgr.lib.basedriver.BaseDriver):
         We keep the one pointed to by "boot system flash" and the currently running one
         status: Todo
         """
-        raise comm.CommException(1, "Not implemented")
+        raise self.ElementException("Not implemented")
         self.connect()
         log.debug("------------------- sw_delete_unneeded() -------------------")
         keep = {}
@@ -402,11 +401,11 @@ class ZXROS_Manager(emmgr.lib.basedriver.BaseDriver):
         # Check the currently running firmware
         lines = self.getCommandOutput("show version", filter_="^System image file is")
         if len(lines) < 1:
-            raise comm.CommException(1, "Unexpected state, can't find command that selects operating system (1)")
+            raise self.ElementException("Unexpected state, can't find command that selects operating system (1)")
         line = lines[0].strip()
         p = line.find(":")
         if p < 0:
-            raise comm.CommException(1, "Unexpected state, can't find command that selects operating system (2)")
+            raise self.ElementException("Unexpected state, can't find command that selects operating system (2)")
         filename = line[p+1:-1]
         if filename[0] == "/":
             filename = filename[1:]
@@ -435,11 +434,11 @@ class ZXROS_Manager(emmgr.lib.basedriver.BaseDriver):
         if true configure element to boot with the filename
         status: Todo
         """
-        raise comm.CommException(1, "Not implemented")
+        raise self.ElementException("Not implemented")
         self.connect()
         log.debug("------------------- sw_set_boot() -------------------")
         if not self.sw_exist(filename):
-            raise comm.CommException(1, "Error cant change boot software, filename %s does not exist" % filename)
+            raise self.ElementException("Error cant change boot software, filename %s does not exist" % filename)
         
         # remove old boot system flash commands
         # todo 
@@ -459,7 +458,7 @@ class ZXROS_Manager(emmgr.lib.basedriver.BaseDriver):
         Helper function. Uploads filename, set filename to boot, save running-config
         status: Todo
         """
-        raise comm.CommException(1, "Not implemented")
+        raise self.ElementException("Not implemented")
         log.debug("------------------- sw_upgrade() -------------------")
         if not self.sw_exist(filename):
             self.swCopyTo(mgr=mgr, filename=filename, callback=callback)

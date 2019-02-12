@@ -35,24 +35,24 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
         if not self.use_ssh:
             match = self.em.expect(r"sername:")
             if match is None:
-                raise comm.CommException(1, "Error waiting for username prompt")
+                raise self.ElementException("Error waiting for username prompt")
             self.em.writeln(self.username)
 
             match = self.em.expect(r"assword:")
             if match is None:
-                raise comm.CommException(1, "Error waiting for password prompt")
+                raise self.ElementException("Error waiting for password prompt")
             self.em.writeln(self.password)
     
         # Go to enable mode
         self.em.writeln()
         match = self.em.expect( { "disable": r">", "enable": r"#"} )
         if match is None:
-            raise comm.CommException(1, "Error waiting for CLI prompt")
+            raise self.ElementException("Error waiting for CLI prompt")
         if match == 'disable':
             self.em.writeln("enable")
             match = self.em.expect(r"assword:")
             if match is None:
-                raise comm.CommException(1, "Error waiting for prompt after enable")
+                raise self.ElementException("Error waiting for prompt after enable")
             self.em.writeln(self.enable_password)
             self.wait_for_prompt()
             
@@ -180,7 +180,7 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
         """
         Set the startup_configuration to config_lines (list)
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
     # ########################################################################
     # Interface management
@@ -194,7 +194,7 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
         Default driver that enables/disables a interface
         This default driver is used if there is a CLI command for this.
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
         
     # use default method
     # def interface_set_admin_state(self, interface, enabled):
@@ -303,7 +303,7 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
         """
         Create a VLAN in the element
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
     
     def vlan_delete(self, vlan):
         """
@@ -367,7 +367,7 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
         """
         Set native VLAN on an Interface
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
     # ########################################################################
     # Software management
@@ -420,8 +420,7 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
         self.em.writeln(cmd)
         match = self.em.expect(r"Destination filename.*\?")
         if match is None:
-            raise comm.CommException(1, "Unexpected output %s" % self.em.match)
-#        self.em.writeln(dest_filename)
+            raise self.ElementException("Unexpected output %s" % self.em.match)
         self.em.writeln("")
 
         match = self.em.expect({
@@ -429,7 +428,7 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
                             "overwrite": r"Do you want to over write\? \[confirm\]",
                             })
         if match is None:
-            raise comm.CommException(1, "File transfer did not start")
+            raise self.ElementException("File transfer did not start")
         if match == "overwrite":
             self.em.writeln("y")
 
@@ -443,7 +442,7 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
                                 "done":    r'bytes copied', 
                                 "error":   r"%Error.*\r\n"})
             if match is None:
-                raise comm.CommException(1, "File transfer finished incorrect, self.before=%s" % self.em.before )
+                raise self.ElementException("File transfer finished incorrect, self.before=%s" % self.em.before )
             if match == "copying":
                 if callback is not None:
                     callback(block)
@@ -455,7 +454,7 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
                     callback("Copying done, copied %s block" % block)
                 break
             elif match == "error":
-                raise comm.CommException(1, "File transfer did not start. search buffer: %s" % self.em.before)
+                raise self.ElementException("File transfer did not start. search buffer: %s" % self.em.before)
         self.wait_for_prompt()
 
     
@@ -463,10 +462,10 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
         """
         Copy software from the element
         """
-        raise comm.CommException(1, "Not implemented")
+        raise self.ElementException("Not implemented")
         self.connect()
         if not self.sw_exist(filename):
-            raise comm.CommException(1, "File %s does not exist on element" % filename)
+            raise self.ElementException("File %s does not exist on element" % filename)
 
     def sw_delete(self, filename, callback=None):
         """
@@ -474,7 +473,7 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
         """
         self.connect()
         if not self.sw_exist(filename):
-            raise comm.CommException(1, "File %s not found in flash" % filename)
+            raise self.ElementException("File %s not found in flash" % filename)
         
         # todo, check so we dont remove the current filename
         # conf = self.getRunningConfig(filter="^boot system flash")
@@ -486,7 +485,7 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
                             "confirm": r"Delete filename.*\?"
                             })
         if match is None:
-            raise comm.CommException(1, "Error deleting filename %s" % filename)
+            raise self.ElementException("Error deleting filename %s" % filename)
         
         if match == "confirm":
             self.em.writeln("")
@@ -495,7 +494,7 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
                     "confirm": "Delete.*\[confirm\]",
                     })
         if match is None:
-            raise comm.CommException(1, "Unexpected response, seach buffer: %s" % self.em.before)
+            raise self.ElementException("Unexpected response, seach buffer: %s" % self.em.before)
 
         self.em.write("y")            # confirm deletion
         self.wait_for_prompt()
@@ -524,11 +523,11 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
         # Check the currently running firmware
         lines = self.getCommandOutput("show version", filter_="^System image file is")
         if len(lines) < 1:
-            raise comm.CommException(1, "Unexpected state, can't find command that selects operating system (1)")
+            raise self.ElementException("Unexpected state, can't find command that selects operating system (1)")
         line = lines[0].strip()
         p = line.find(":")
         if p < 0:
-            raise comm.CommException(1, "Unexpected state, can't find command that selects operating system (2)")
+            raise self.ElementException("Unexpected state, can't find command that selects operating system (2)")
         filename = line[p+1:-1]
         if filename[0] == "/":
             filename = filename[1:]
@@ -558,7 +557,7 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
         """
         self.connect()
         if not self.sw_exist(filename):
-            raise comm.CommException(1, "Error cant change boot software, filename %s does not exist" % filename)
+            raise self.ElementException("Error cant change boot software, filename %s does not exist" % filename)
         
         # remove old boot system flash commands
         lines = self.getRunningConfig(filter_="^boot system flash ")

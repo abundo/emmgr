@@ -25,9 +25,9 @@ class ElementException(Exception):
 class Element:
     """
     Manage one element. Load the driver that does the actual work and
-    bridge calls to it.
+    bridge method/attribute calls to the driver.
     """
-    exception = ElementException
+    ElementException = BaseDriver.ElementException
 
     @classmethod
     def get_models(cls):
@@ -54,7 +54,7 @@ class Element:
                 addr = socket.gethostbyname(hostname)
                 kwargs['ipaddr_mgmt'] = addr
             except socket.gaierror as err:
-                raise self.Exception("Cannot get IP address for %s" % hostname)
+                raise self.ElementException("Cannot get IP address for %s" % hostname)
 
         # Copy in some defaults from config, if not specified
         for key, attr in config.em.scriptaccount.items():

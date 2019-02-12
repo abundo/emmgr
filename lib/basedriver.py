@@ -92,7 +92,7 @@ class BaseDriver:
                 if model in loaded_models:
                     break
             except yaml.YAMLError as err:
-                raise ElementException("Cannot load element configuration %s, err: %s" % (def_file, err))
+                raise self.ElementException("Cannot load element configuration %s, err: %s" % (def_file, err))
         return definitions
 
     def get_definition(self, attr, default=dummy):
@@ -143,7 +143,7 @@ class BaseDriver:
 
     @classmethod
     def get_models(cls):
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
         
     def connect(self):
         log.debug("------------------- connect(%s) -------------------" % self.hostname)
@@ -151,13 +151,13 @@ class BaseDriver:
         self.em = comm.Expect(self.transport)
 
     def disconnect(self):
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
     def reload(self, save_config=True):
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
     def run(self, cmd=None, filter_=None, callback=None):
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
 
     # ########################################################################
@@ -165,10 +165,10 @@ class BaseDriver:
     # ########################################################################
     
     def license_get(self):
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
     def license_set(self, url=None, save_config=True, reload=None, callback=None):
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
 
     # ########################################################################
@@ -178,33 +178,33 @@ class BaseDriver:
     def wait_for_prompt(self):
         log.debug("------------------- wait_for_prompt(%s) -------------------" % self.hostname)
         if not self._wait_for_prompt:
-            raise ElementException("Not implemented")
+            raise self.ElementException("Not implemented")
         match = self.em.expect(self._wait_for_prompt)
         return match
 
     def configure(self, config_lines=None, save_running_config=False):
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
     def enable_ssh(self):
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
     def get_running_config(self, filter_=None, refresh=False, callback=None):
         """
         Fetch the running configuration, returns as a list of lines
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
     def save_running_config(self, callback=None):
         """
         Save running configuration as startup configuration
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
     def set_startup_config(self, config_lines=None, callback=None):
         """
         Set the startup_configuration to config_lines (list)
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
     # ########################################################################
     # Interface management
@@ -219,7 +219,7 @@ class BaseDriver:
         try:
             cmd_template = self.get_definition("config.interface.clear_config.cmd")
         except KeyError:
-            raise ElementException("Not implemented")
+            raise self.ElementException("Not implemented")
         t = jinja2.Template(cmd_template)
         cmd = t.render(interface_name=interface)
         cmd = cmd.split('\n')
@@ -230,7 +230,7 @@ class BaseDriver:
         Default driver that retrieves an interface admin state
         This default driver is used if there is a CLI command for this.
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
         
     def interface_set_admin_state(self, interface=None, state=None, save_running_config=False, callback=None):
         """
@@ -245,7 +245,7 @@ class BaseDriver:
         try:
             cmd_template = self.get_definition(attr)
         except KeyError:
-            raise ElementException("Not implemented")
+            raise self.ElementException("Not implemented")
         t = jinja2.Template(cmd_template)
         cmd = t.render(interface_name=interface)
         cmd = cmd.split('\n')
@@ -260,7 +260,7 @@ class BaseDriver:
         """
         Returns the device L2 neighbours, using CDP, LLDP and similar protocols
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
     # ########################################################################
     # VLAN management
@@ -271,44 +271,44 @@ class BaseDriver:
         List all VLANs in the element
         Returns a dict, key is vlan ID
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
     
     def vlan_create(self, vlan=None, name=None):
         """
         Create a VLAN in the element
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
     
     def vlan_delete(self, vlan=None):
         """
         Delete a VLAN in the element
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
     
     def vlan_interface_get(self, interface=None):
         """
         Get all VLANs on an interface
         Returns a dict, key is vlan ID
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
     
     def vlan_interface_create(self, interface=None, vlan=None, tagged=True):
         """
         Create a VLAN on an interface
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
     
     def vlan_interface_delete(self, interface=None, vlan=None):
         """
         Delete a VLAN from an interface
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
     
     def vlan_interface_set_native(self, interface=None, vlan=None):
         """
         Set native VLAN on an Interface
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
      
     # ########################################################################
     # File management
@@ -325,25 +325,25 @@ class BaseDriver:
         """
         List all files on the element
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
     def file_copy_to(self, mgr=None, filename=None, dest_filename=None, callback=None):
         """
         Copy file to element
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
     def file_copy_from(self, mgr=None, filename=None, callback=None):
         """
         Copy file from element
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
     def file_delete(self, filename, callback=None):
         """
         Delete file on element
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
     # ########################################################################
     # Software management
@@ -360,54 +360,54 @@ class BaseDriver:
         """
         List all firmware on the element
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
     def sw_copy_to(self, mgr=None, filename=None, dest_filename=None, callback=None):
         """
         Copy firmware to element
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
     def sw_copy_from(self, mgr=None, filename=None, callback=None):
         """
         Copy firmware from element
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
     def sw_delete(self, filename, callback=None):
         """
         Delete firmware from element
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
     def sw_delete_unneeded(self, callback=None):
         """
         Delete unneeded firmware from element
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
     def sw_set_boot(self, filename, callback=None):
         """
         Set which firmware to boot
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
     def sw_upgrade(self, mgr=None, filename=None, setboot=True, callback=None):
         """       
         Upgrade element firmware to filename
         If needed, other firmware is deleted to make room for the new firmware
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
     
     def get_bootloader(self, callback=None):
         """       
         Returns current bootloader
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
 
     def set_bootloader(self, mgr=None, filename=None, callback=None):
         """
         Copies bootloader to element and activates it
         """
-        raise ElementException("Not implemented")
+        raise self.ElementException("Not implemented")
