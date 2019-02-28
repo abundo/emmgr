@@ -63,7 +63,7 @@ class SSH_Connection:
         log.debug("------------------- socket.connect(%s) -------------------" % host)
         try:
             self.sock.connect((str(host), port))
-        except (ConnectionRefusedError, OSError) as err:
+        except socket.error as err:
             raise CommException(1, "socket.connect() host %s, err %s" % (host, err))
 
         self.ssh_session = ssh2.session.Session()
