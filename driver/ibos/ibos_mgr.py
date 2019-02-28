@@ -497,32 +497,36 @@ class IBOS_Manager(emmgr.lib.basedriver.BaseDriver):
         if callback:
             callback("Copy file %s to element" % (filename))
         self.connect()
-        if self.sw_exist(filename):
+        if filename != "bootloader" and self.sw_exist(filename):
             return  # already on device
-         
-        cmd = "copy %s/%s flash:" % (mgr, filename)
-        if dest_filename:
-            cmd += dest_filename
-        self.em.writeln(cmd)
 
-        block = 0
+        if not dest_filename:
+            dest_filename = 'flash:'    # todo from settings
+                 
+        cmd = "copy %s/%s %s" % (mgr, filename, dest_filename)
+        self.em.writeln(cmd)
+        copied_bytes = 0
+        re_copied_bytes = re.compile(r"(\d+)\/(\d+)")
         while True:
-            block += 1
-            if callback:
-                callback("Copying file to element, block %s" % block)
+            # catch copied bytes, each output has a \r. when done a \r\n is received
+            # 47104/561827\r101376/561827\r156672/561827\r211968/561827\r243712/561827\r297984/561827\r352256/561827\r405504/561827\r460800/561827\r515072/561827\r\n
             match = self.em.expect({
-                                "copying": r'Writing file .*\r\n', 
-                                "done":    r'Transferred.*\r\n', 
-                                "error":   r"%Error.*\r\n"})
+                                    "done":    r'Transferred.*\r\n', 
+                                    "error":   r"%Error.*\r\n",
+                                    "copying": r'\d+.\d+\r'
+                                    })
             if match is None:
                 raise self.ElementException("File transfer finished incorrectly, self.before=%s" % self.em.before )
             if match == "copying":
                 if callback is not None:
-                    callback(block)     # todo, use match
+                    tmp = re_copied_bytes.search(self.em.before)
+                    if tmp:
+                        copied_bytes = tmp.group(1)
+                        callback("Copied %s of %s bytes" % (copied_bytes, tmp.group(2)))
                 continue
             elif match == "done":
                 if callback:
-                    callback("Copying done, copied %s block" % block)
+                    callback("Copying done, copied %s bytes" % copied_bytes)
                 break
             elif match == "error":
                 raise self.ElementException("File transfer did not start. search buffer: %s" % self.em.before)
