@@ -352,6 +352,12 @@ class BaseDriver:
     # Software management
     # ########################################################################
     
+    def sw_get_version(self):
+        """
+        Returns the version of the software running
+        """
+        raise self.ElementException("Not implemented")
+
     def sw_exist(self, filename, callback=None):
         """
         Returns true if filename exist on element

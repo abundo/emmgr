@@ -464,6 +464,17 @@ class IBOS_Manager(emmgr.lib.basedriver.BaseDriver):
     # Software management
     # ########################################################################
 
+    def sw_get_version(self):
+        """
+        Returns the version of the software running
+        """
+        self.connect()
+        lines = self.run("show version ; i Intelligent")
+        if len(lines):
+            tmp = lines[0].split()
+            return tmp[-1]
+        return None
+
     def sw_get_boot(self):
         """
         Get firmware image that will be loaded next reboot

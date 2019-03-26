@@ -431,6 +431,17 @@ class CLI_vlan_interface_set_native(BaseCLI):
 # Software management
 # ########################################################################
 
+class CLI_sw_get_version(BaseCLI):
+#    def add_arguments(self):
+#        super().add_arguments()
+
+    def run(self):
+        try:
+            super().run()
+            res = self.mgr.sw_get_version()
+            print(res)
+        except self.mgr_cls.ElementException as err:
+            print("Error: %s" % err)
 
 class CLI_sw_exist(BaseCLI):
     def add_arguments(self):
