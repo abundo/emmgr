@@ -60,30 +60,27 @@ class SSH_Connection:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if timeout:
             self.sock.settimeout(timeout)
-        log.debug("------------------- socket.connect(%s) -------------------" % host)
         try:
             self.sock.connect((str(host), port))
         except socket.error as err:
             raise CommException(1, "socket.connect() host %s, err %s" % (host, err))
 
-        self.ssh_session = ssh2.session.Session()
-        if timeout:
-            self.ssh_session.set_timeout(timeout * 1000)   # In milliseconds
-        log.debug("------------------- ssh_session.handshake(%s) -------------------" % host)
         try:
-            self.ssh_session.handshake(self.sock)
-        except ssh2.exceptions.SocketRecvError as err:
-            raise CommException(1, err)
-        log.debug("------------------- ssh_session.userauth_password(%s) -------------------" % host)
-        self.ssh_session.userauth_password(username, password)
+            self.ssh_session = ssh2.session.Session()
+            if timeout:
+                self.ssh_session.set_timeout(timeout * 1000)   # In milliseconds
+            try:
+                self.ssh_session.handshake(self.sock)
+            except ssh2.exceptions.SocketRecvError as err:
+                raise CommException(1, err)
+            self.ssh_session.userauth_password(username, password)
 
-        log.debug("------------------- ssh_session.open_session(%s) -------------------" % host)
-        self.channel = self.ssh_session.open_session()
-        log.debug("------------------- channel.pty(%s) -------------------" % host)
-        self.channel.pty(term="vt100")
-        # self.channel.pty(term="dumb")
-        log.debug("------------------- channel.shell(%s) -------------------" % host)
-        self.channel.shell()
+            self.channel = self.ssh_session.open_session()
+            self.channel.pty(term="vt100")
+            # self.channel.pty(term="dumb")
+            self.channel.shell()
+        except ssh2.exceptions.SSH2Error as err:
+            raise CommException(1, "Cannot connect using ssh, err: %s" % err)
         self.fd = self.sock.fileno()
 
     def get_socket(self):
