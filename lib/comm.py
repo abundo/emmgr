@@ -37,6 +37,9 @@ class Telnet_Connection:
             raise CommException(1, "Timeout connecting to %s" % host)
         self.fd = self.tn.fileno()
     
+    def close(self):
+        self.tn.close()
+
     def get_socket(self):
         return self.tn.get_socket()
 
