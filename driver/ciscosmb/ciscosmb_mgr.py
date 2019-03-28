@@ -175,7 +175,7 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
             callback("Save running-config as startup-config, hostname %s" % self.hostname)
         self.connect()
         self.em.writeln("copy running-config startup-config")
-        self.em.expect("?")
+        self.em.expect("\\?")
         self.em.writeln("Y")
         self.em.expect("Copy succeeded")
         self.wait_for_prompt()
