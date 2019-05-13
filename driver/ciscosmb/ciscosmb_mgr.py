@@ -32,16 +32,16 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
             return
         super().connect()
 
-        if not self.use_ssh:
-            match = self.em.expect(r"User Name:")
-            if match is None:
-                raise self.ElementException("Error waiting for username prompt")
-            self.em.writeln(self.username)
+        while True:
+            match = self.em.expect( { "username": r"User Name:", "password": r"assword:" } )
+            if match == "username":
+                self.em.writeln(self.username)
+                continue
+            elif match == "password":
+                self.em.writeln(self.password)
+                break
 
-            match = self.em.expect(r"assword:")
-            if match is None:
-                raise self.ElementException("Error waiting for password prompt")
-            self.em.writeln(self.password)
+            raise self.ElementException("Error logging in, no username/password prompt")
     
         # Go to enable mode
         match = self.em.expect( { "disable": r">", "enable": r"#", 'change': r"change it now"} )
@@ -117,22 +117,21 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
         log.debug("------------------- run() -------------------")
         self.em.writeln(cmd)
         self.wait_for_prompt()
-        output = self.em.before.split("\n")
+        output = self.em.before.split("\r\n")
         if len(output) > 1:
-            output = output[1:]
+            output = output[1:-1]
+            if len(output):
+                output[0] = output[0].replace("\r", "")
         return self.filter_(output, filter_)
 
     # ########################################################################
     # Configuration
     # ########################################################################
 
-    # def wait_for_prompt(self):
-    #     log.debug("------------------- wait_for_prompt() -------------------")
-    #     match = self.em.expect("#")
-    #     return match
-
     def configure(self, config_lines, save_running_config=False, callback=None):
-        """Reconfigure device"""
+        """
+        Reconfigure device
+        """
         self.connect()
         log.debug("------------------- configure() -------------------")
         config_lines = self.str_to_lines(config_lines)
@@ -175,7 +174,7 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
             callback("Save running-config as startup-config, hostname %s" % self.hostname)
         self.connect()
         self.em.writeln("copy running-config startup-config")
-        self.em.expect("?")
+        self.em.expect("\\?")
         self.em.writeln("Y")
         self.em.expect("Copy succeeded")
         self.wait_for_prompt()
