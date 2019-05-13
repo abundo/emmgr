@@ -9,6 +9,7 @@ from orderedattrdict import AttrDict
 
 import emmgr.lib.log as log
 import emmgr.lib.comm as comm
+import emmgr.lib.emtypes as emtypes
 import emmgr.lib.basedriver
 
 
@@ -228,40 +229,99 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
             key = peer.hostname
         peers[key] = peer
 
-    def l2_peers(self):
+    def _l2_peers_get_sections(self, lines):
         """
-        Returns the device L2 neighbours, using CDP, LLDP and similar protocols
+        Return tuples with sections, one for each peer, using ---- as divider
         """
-
-        lines = self.run(cmd='show cdp neighbors detail')
-        peers = {}
-        peer = None
-        for line in lines:
-            if line.startswith('Device ID'):
-                self.add_peer(peers, peer)
-                tmp = line.split()
-                peer = self.Peer(hostname=tmp[2])
-                state = 2
+        row_ix = []
+        ix = 0
+        while ix < len(lines):
+            line = lines[ix]
+            if line and line[0] == "-":
+                row_ix.append(ix+1)
+            ix += 1
+        sections = []
+        for ix in range(0, len(row_ix)):
+            if ix == len(row_ix) - 1:
+                sections.append( (row_ix[ix], len(lines)) )
             else:
-                if peer:
-                    tmp = line.lower().split()
-                    # print("tmp", tmp)
-                    if len(tmp) < 1:
-                        continue
-                    if tmp[0] == 'platform:':
-                        peer.remote_platform = tmp[2]
-                    elif tmp[0] == 'interface:':
-                        peer.local_if = tmp[1].replace(",", "")
-                        peer.remote_if = tmp[6]
-                    elif tmp[0] == 'ip' and tmp[1] == 'address:':
-                        peer.ipaddr_mgmt = tmp[2]
-        self.add_peer(peers, peer)
+                sections.append( (row_ix[ix], row_ix[ix+1]) )
+        return sections
 
-        keys = sorted(peers.keys())
-        tmp = []
-        for key in keys:
-            tmp.append(peers[key])
-        return tmp
+
+    def l2_peers(self, interface=None, default_domain=None):
+        """
+        Returns the device L2 neighbours, LLDP and CDP
+        """
+        peers = emtypes.Peers()
+
+        # ----- LLDP -----
+        if interface:
+            cmd = "show lldp neighbors %s detail" % interface
+        else:
+            cmd = "show lldp neighbors detail"
+        lines = self.run(cmd=cmd)
+        sections = self._l2_peers_get_sections(lines)
+
+        ix = 0
+        for start,stop in sections:
+            peer = emtypes.Peer(local_if="")
+            for line in lines[start:stop]:
+                # print(line)
+                if line.startswith("Local Intf:"):
+                    peer.local_if = line[11:].strip()
+                elif line.startswith("Chassis id:"):
+                    peer.remote_mac = line[11:].strip()
+                elif line.startswith("Port id:"):
+                    peer.remote_if = line[8:].strip()
+                elif line.startswith("System Name:"):
+                    peer.remote_hostname = line[12:].strip()
+                    if default_domain and "." not in peer.remote_hostname:
+                        peer.remote_hostname += "." + default_domain
+                elif line.startswith("System Description:"):
+                    peer.remote_description = lines[start+1]
+                elif line.startswith("Management Addresses:"):
+                    peer.remote_ipaddr = lines[start + 1].strip().split()[1]
+                start += 1
+            if peer.local_if:
+                peers.add(peer)
+            else:
+                log.warning("Cannot add peer, no local_if. %s" % peer)
+        
+        # ----- CDP -----
+        if interface:
+            cmd = "show cdp neighbors %s detail" % interface
+        else:
+            cmd = "show cdp neighbors detail"
+        lines = self.run(cmd=cmd)
+        sections = self._l2_peers_get_sections(lines)
+
+        ix = 0
+        for start,stop in sections:
+            peer = emtypes.Peer(remote_mac="")
+            for line in lines[start:stop]:
+                # print(line)
+                if line.startswith("Device ID:"):
+                    peer.remote_hostname = line[11:].strip()
+                    if default_domain and "." not in peer.remote_hostname:
+                        peer.remote_hostname += "." + default_domain
+                if line.startswith("Platform:"):
+                    peer.remote_description = line[9:].strip().split(",")[0]
+                elif line.startswith("Interface:"):
+                    tmp = line.split()
+                    peer.local_if = tmp[1].replace(",", "")
+                    peer.remote_if = tmp[6].replace(",", "")
+                elif line.startswith("  IP address:"):
+                    peer.remote_ipaddr = line[13:].strip()
+            if peer.local_if:
+                if not peers.exists(peer):
+                    peers.add(peer)
+                else:
+                    log.warning("Peer %s already added, through LLDP" % peer)
+            else:
+                log.warning("Cannot add peer, no local_if. %s" % peer)
+
+        return peers
 
     # ########################################################################
     # VLAN management
