@@ -259,7 +259,7 @@ class BaseDriver:
     # Topology
     # ########################################################################
 
-    def l2_peers(self):
+    def l2_peers(self, interface=None, default_domain=None):
         """
         Returns the device L2 neighbours, using CDP, LLDP and similar protocols
         """
