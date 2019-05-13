@@ -10,6 +10,7 @@ from orderedattrdict import AttrDict
 
 import emmgr.lib.log as log
 import emmgr.lib.comm as comm
+import emmgr.lib.emtypes as emtypes
 import emmgr.lib.basedriver
 
 
@@ -264,8 +265,65 @@ class IBOS_Manager(emmgr.lib.basedriver.BaseDriver):
     # Topology
     # ########################################################################
 
-    def l2_peers(self):
-        raise self.ElementException("Not implemented")
+    def l2_peers(self, interface=None, default_domain=None):
+        """
+        Returns the device L2 neighbours, using LLDP and PFDP.
+        LLDP is checked first, then PFDP. PFDP only complements peers that
+        does not exist in LLDP.
+        """
+
+        peers = emtypes.Peers()
+
+        cmd = "show lldp neighbours"
+        if interface:
+            cmd += " interface " + interface
+        lines = self.run(cmd=cmd)
+        peer = None
+        ix = 0
+        while ix < len(lines):
+            line = lines[ix]
+            ix += 1
+            if line.startswith('Interface:'):
+                # New peer, save old
+                if peer:
+                    peers.add(peer)
+
+                tmp = line.split()
+                peer = emtypes.Peer(local_if=tmp[1][:-1])
+                while ix < len(lines):
+                    line = lines[ix]
+                    ix += 1
+                    if line.startswith("Interface:"):
+                        # next peer
+                        ix -= 1
+                        break
+                    tmp = line.strip().split()
+                    # print(tmp)
+                    if len(tmp) > 1:
+                        key = tmp[0].lower()
+                        if key == "chassisid:":
+                            peer.remote_mac = tmp[2]
+                        elif key == "sysname:":
+                            peer.remote_hostname = tmp[1]
+                            if "." not in peer.remote_hostname and default_domain:
+                                peer.remote_hostname += "." + default_domain
+                        elif key == "sysdescr:":
+                            peer.remote_description = line.strip().split(None,1)[1]
+                        elif key == "mgmtip:":
+                            peer.remote_ipaddr = tmp[1]
+                        elif key == "portid:":
+                            peer.remote_if = tmp[2]
+
+        # If new peer, save old
+        if peer:
+            peers.add(peer)
+        
+        # Todo, check PFDP peers
+        #lines = self.run(cmd="show pfdp neighbours detailed")
+        #for line in lines:
+        #    print(line)
+
+        return peers
 
     # ########################################################################
     # VLAN management
