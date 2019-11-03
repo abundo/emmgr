@@ -287,10 +287,14 @@ class Expect:
                         tmp = tmp.replace("\n", "\\n").replace("\r", "\\r")
                         log.debug("  expect, self.before    : %s" % tmp)
 
+                    tmp = self.before[m.end():]
+                    if len(tmp):
+                        # There are received data after our match, return the extra data
                         if log.isEnabledFor(log.DEBUG):
                             tmp = tmp.replace("\n", "\\n").replace("\r", "\\r")
                             log.debug("  expect, returned to buffer: '%s'" % tmp)
                         self.transport.unread(self.before[m.end():])  # text after match is returned to transport
+
                     return key
         raise CommException(1, "  expect, timeout, self.before: %s" % self.before)
 
