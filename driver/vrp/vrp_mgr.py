@@ -105,11 +105,6 @@ class VRP_Manager(emmgr.lib.basedriver.BaseDriver):
     # Configuration
     # ########################################################################
 
-    # def wait_for_prompt(self, timeout=None):
-    #     log.debug("------------------- wait_for_prompt() -------------------")
-    #     match = self.em.expect(["\r\n<.*>", "\r\n\[.*\]"], timeout=timeout)
-    #     return match
-
     def configure(self, config_lines, save_running_config=False, callback=None):
         """
         Reconfigure device
