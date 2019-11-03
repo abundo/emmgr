@@ -97,6 +97,8 @@ class VRP_Manager(emmgr.lib.basedriver.BaseDriver):
         self.em.writeln(cmd)
         self.wait_for_prompt()
         output = self.em.before.split("\r\n")
+        if len(output) > 1:
+            output = output[1:-1]
         return self.filter_(output, filter_)
 
     # ########################################################################
