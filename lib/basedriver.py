@@ -39,6 +39,7 @@ class BaseDriver:
                  enable_password=None,
                  use_ssh=True,
                  definitions=None,
+                 newline=None,
                  **kwargs                   # Ignore any additional parameters
                  ):
         self.hostname = hostname
@@ -50,6 +51,7 @@ class BaseDriver:
         self.enable_password = enable_password
         self.use_ssh = use_ssh    # If true use ssh instead of telnet
         self.kwargs = kwargs
+        self.newline = newline
 
         if self.ipaddr_mgmt:
             self.hostname = self.ipaddr_mgmt
@@ -70,7 +72,7 @@ class BaseDriver:
             self.method = "ssh"
         else:
             self.method="telnet"
-        self.transport = comm.RemoteConnection(timeout=10, method=self.method)
+        self.transport = comm.RemoteConnection(timeout=10, method=self.method, newline=self.newline)
        
     @classmethod
     def load_definitions(cls, model=None):

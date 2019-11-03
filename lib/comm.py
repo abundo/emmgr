@@ -113,14 +113,17 @@ class RemoteConnection:
     - ensures that all newlines follows unix style "\n"
     """
 
-    def __init__(self, codec="utf8", timeout=10, method=None, newline="\n"):
+    def __init__(self, codec="utf8", timeout=10, method=None, newline=None):
         self._codec = codec
         self._timeout = timeout
         self._method = method
 
         self._buffer = b""
         self.status = ""
-        self.newline = newline
+        if newline:
+            self.newline = newline
+        else:
+            self.newline = "\n"
         self.selector_r = selectors.DefaultSelector()
         self.selector_w = selectors.DefaultSelector()
 
