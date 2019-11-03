@@ -97,9 +97,12 @@ class SSH_Connection:
         self.channel.write(data)
     
     def close(self):
-        self.channel.close()
-        self.sock.close()
         self.fd = -1
+        try:
+            self.channel.close()
+            self.sock.close()
+        except ssh2.exceptions.SocketDisconnectError:
+            pass
 
 
 class RemoteConnection:
@@ -110,14 +113,17 @@ class RemoteConnection:
     - ensures that all newlines follows unix style "\n"
     """
 
-    def __init__(self, codec="utf8", timeout=10, method=None, newline="\n"):
+    def __init__(self, codec="utf8", timeout=10, method=None, newline=None):
         self._codec = codec
         self._timeout = timeout
         self._method = method
 
         self._buffer = b""
         self.status = ""
-        self.newline = newline
+        if newline:
+            self.newline = newline
+        else:
+            self.newline = "\n"
         self.selector_r = selectors.DefaultSelector()
         self.selector_w = selectors.DefaultSelector()
 
@@ -262,7 +268,6 @@ class Expect:
         for key, match in matches.items():
             regexes[key] = re.compile(match)
 
-        log.debug("expect, match criteria %s" % regexes)
         while True:
             c = self.transport.read(timeout=timeout)
             if c is None:
@@ -271,15 +276,25 @@ class Expect:
             for key, regex in regexes.items():
                 m = regex.search(self.before)
                 if m:
+                    log.debug("  expect, matched pattern: '%s' %s" % (key, regex))
                     self.match = m.group()
-                    log.debug("  expect, matched: %s" % self.match)
+                    if log.isEnabledFor(log.DEBUG):
+                        tmp = self.match.replace("\n", "\\n").replace("\r", "\\r")
+                        log.debug("  expect, matched text   : %s" % tmp)
 
                     tmp = self.before[:m.end()]    # Everthing up to matched text
-                    tmp = tmp.replace("\n", "\\n")
-                    tmp = tmp.replace("\r", "\\r")
-                    log.debug("  expect, self.before: %s" % tmp)
-                    log.debug("  expect, returned to buffer: '%s'" % self.before[m.end():])
-                    self.transport.unread(self.before[m.end():])  # text after match is returned to transport
+                    if log.isEnabledFor(log.DEBUG):
+                        tmp = tmp.replace("\n", "\\n").replace("\r", "\\r")
+                        log.debug("  expect, self.before    : %s" % tmp)
+
+                    tmp = self.before[m.end():]
+                    if len(tmp):
+                        # There are received data after our match, return the extra data
+                        if log.isEnabledFor(log.DEBUG):
+                            tmp = tmp.replace("\n", "\\n").replace("\r", "\\r")
+                            log.debug("  expect, returned to buffer: '%s'" % tmp)
+                        self.transport.unread(self.before[m.end():])  # text after match is returned to transport
+
                     return key
         raise CommException(1, "  expect, timeout, self.before: %s" % self.before)
 
@@ -287,11 +302,11 @@ class Expect:
         return self.transport.read(maxlen)
 
     def write(self, msg):
-        log.debug("expect write: %s" % msg)
+        log.debug("------------------- write('%s') -------------------" % msg)
         self.transport.write(msg)
 
     def writeln(self, msg=None):
-        log.debug("expect writeln: '%s'" % msg)
+        log.debug("------------------- writeln('%s') -------------------" % msg)
         self.transport.writeln(msg)
 
 

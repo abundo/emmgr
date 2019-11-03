@@ -65,6 +65,9 @@ def addLogger(stream):
 def removeLogger(handler):
     logger.removeHandler(handler)
 
+def isEnabledFor(level):
+    return logger.isEnabledFor(level)
+
 formatstr='%(asctime)s %(levelname)s %(message)s '
 loglevel = logging.INFO
 logger = logging.getLogger('luconf')

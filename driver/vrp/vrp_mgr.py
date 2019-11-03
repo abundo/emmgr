@@ -56,7 +56,7 @@ class VRP_Manager(emmgr.lib.basedriver.BaseDriver):
         self.wait_for_prompt()
         self.em.writeln("screen-length 0 temporary")
         self.wait_for_prompt()
-        self.em.writeln("screen-width 512 temporary")
+        self.em.writeln("screen-width 512")
         self.wait_for_prompt()
 
     def disconnect(self):
@@ -97,16 +97,13 @@ class VRP_Manager(emmgr.lib.basedriver.BaseDriver):
         self.em.writeln(cmd)
         self.wait_for_prompt()
         output = self.em.before.split("\r\n")
+        if len(output) > 1:
+            output = output[1:-1]
         return self.filter_(output, filter_)
 
     # ########################################################################
     # Configuration
     # ########################################################################
-
-    # def wait_for_prompt(self, timeout=None):
-    #     log.debug("------------------- wait_for_prompt() -------------------")
-    #     match = self.em.expect(["\r\n<.*>", "\r\n\[.*\]"], timeout=timeout)
-    #     return match
 
     def configure(self, config_lines, save_running_config=False, callback=None):
         """
@@ -121,6 +118,7 @@ class VRP_Manager(emmgr.lib.basedriver.BaseDriver):
             raise self.ElementException("Error Could not enter configuration mode")
         for config_line in config_lines:
             self.em.writeln(config_line)
+            self.wait_for_prompt()
         self.em.writeln("return")
         self.wait_for_prompt()
         if save_running_config:
@@ -158,6 +156,8 @@ class VRP_Manager(emmgr.lib.basedriver.BaseDriver):
         if callback:
             callback("Save current-config as startup-config, hostname %s" % self.hostname)
         self.run("save")
+        match = self.em.expect("configuration successfully")
+        self.wait_for_prompt()
         return True
         
     def set_startup_config(self, config_lines=None, callback=None):
