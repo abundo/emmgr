@@ -13,8 +13,3 @@ em:
     password: '<secret password>'
     enable_password: '<secret enable password>'
     use_ssh: true
-
-jobs:
-  max_concurrent:   10   # max number of concurrent parallel jobs
-  poll_interval:     5   # seconds
-  max_runtime:    3600   # seconds
