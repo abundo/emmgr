@@ -48,7 +48,7 @@ class BaseCLI(util.BaseCLI):
                                  default=True)
         self.parser.add_argument('--loglevel',
                                  choices=['info', 'warning', 'error', 'debug'],
-                                 help='Set loglevel, one of < info | warning | error | debug >', 
+                                 help='Set loglevel, one of info, warning, error or debug',
                                  default='info' )
 
     def run(self):
