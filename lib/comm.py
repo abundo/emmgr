@@ -268,7 +268,6 @@ class Expect:
         for key, match in matches.items():
             regexes[key] = re.compile(match)
 
-        log.debug("expect, match criteria %s" % regexes)
         while True:
             c = self.transport.read(timeout=timeout)
             if c is None:
@@ -277,6 +276,7 @@ class Expect:
             for key, regex in regexes.items():
                 m = regex.search(self.before)
                 if m:
+                    log.debug("  expect, matched pattern: '%s' %s" % (key, regex))
                     self.match = m.group()
                     if log.isEnabledFor(log.DEBUG):
                         tmp = self.match.replace("\n", "\\n").replace("\r", "\\r")
@@ -302,11 +302,11 @@ class Expect:
         return self.transport.read(maxlen)
 
     def write(self, msg):
-        log.debug("expect write: %s" % msg)
+        log.debug("------------------- write('%s') -------------------" % msg)
         self.transport.write(msg)
 
     def writeln(self, msg=None):
-        log.debug("expect writeln: '%s'" % msg)
+        log.debug("------------------- writeln('%s') -------------------" % msg)
         self.transport.writeln(msg)
 
 
