@@ -97,9 +97,12 @@ class SSH_Connection:
         self.channel.write(data)
     
     def close(self):
-        self.channel.close()
-        self.sock.close()
         self.fd = -1
+        try:
+            self.channel.close()
+            self.sock.close()
+        except ssh2.exceptions.SocketDisconnectError:
+            pass
 
 
 class RemoteConnection:
