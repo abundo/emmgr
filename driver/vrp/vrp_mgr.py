@@ -56,7 +56,7 @@ class VRP_Manager(emmgr.lib.basedriver.BaseDriver):
         self.wait_for_prompt()
         self.em.writeln("screen-length 0 temporary")
         self.wait_for_prompt()
-        self.em.writeln("screen-width 512 temporary")
+        self.em.writeln("screen-width 512")
         self.wait_for_prompt()
 
     def disconnect(self):
