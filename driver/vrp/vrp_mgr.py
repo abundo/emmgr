@@ -118,6 +118,7 @@ class VRP_Manager(emmgr.lib.basedriver.BaseDriver):
             raise self.ElementException("Error Could not enter configuration mode")
         for config_line in config_lines:
             self.em.writeln(config_line)
+            self.wait_for_prompt()
         self.em.writeln("return")
         self.wait_for_prompt()
         if save_running_config:
@@ -155,6 +156,8 @@ class VRP_Manager(emmgr.lib.basedriver.BaseDriver):
         if callback:
             callback("Save current-config as startup-config, hostname %s" % self.hostname)
         self.run("save")
+        match = self.em.expect("configuration successfully")
+        self.wait_for_prompt()
         return True
         
     def set_startup_config(self, config_lines=None, callback=None):
