@@ -278,14 +278,19 @@ class Expect:
                 m = regex.search(self.before)
                 if m:
                     self.match = m.group()
-                    log.debug("  expect, matched: %s" % self.match)
+                    if log.isEnabledFor(log.DEBUG):
+                        tmp = self.match.replace("\n", "\\n").replace("\r", "\\r")
+                        log.debug("  expect, matched text   : %s" % tmp)
 
                     tmp = self.before[:m.end()]    # Everthing up to matched text
-                    tmp = tmp.replace("\n", "\\n")
-                    tmp = tmp.replace("\r", "\\r")
-                    log.debug("  expect, self.before: %s" % tmp)
-                    log.debug("  expect, returned to buffer: '%s'" % self.before[m.end():])
-                    self.transport.unread(self.before[m.end():])  # text after match is returned to transport
+                    if log.isEnabledFor(log.DEBUG):
+                        tmp = tmp.replace("\n", "\\n").replace("\r", "\\r")
+                        log.debug("  expect, self.before    : %s" % tmp)
+
+                        if log.isEnabledFor(log.DEBUG):
+                            tmp = tmp.replace("\n", "\\n").replace("\r", "\\r")
+                            log.debug("  expect, returned to buffer: '%s'" % tmp)
+                        self.transport.unread(self.before[m.end():])  # text after match is returned to transport
                     return key
         raise CommException(1, "  expect, timeout, self.before: %s" % self.before)
 
