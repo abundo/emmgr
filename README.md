@@ -12,11 +12,30 @@ Emmgr contains several modules
     * Gives access to the library from the command line
 
 
+Generic drivers exist for
+
+* Cisco IOS
+* Cisco SMB (Small Business)
+* Huawei VRP
+* Waystream iBOS (PacketFront) 
+* ZTE zxros
+
+Specific drivers exist for
+
+* Cisco ASR920 (IOS)
+* Cisco ME3400 (IOS)
+* Cisco C4500 (IOS)
+* Huawei S5700 (VRP)
+* Waystream MS4000 (iBOS)
+* ZTE RS5128 (zxros)
+
+
+
 # Directories overview
 
 | Directory              | Description                 |
 | -----------------------| --------------------------- |
-| /etc/emmgr             | Configuration directory     |
+| /etc/emmgr             | Configuration files         |
 | /opt/emmgr             | Base directory              |
 | /opt/emmgr/cli         | CLI                         |
 | /opt/emmgr/config      | Example configuration files |
@@ -58,7 +77,7 @@ With this script most functions in emmgr can be called.
 
 To make it easy to access, create an symlink somwhere in your path
 
-    sudo ln -s /opt/emmgr/cli/emmgr /usr/local/lib/emmgr
+    sudo ln -s /opt/emmgr/cli/emmgr.py /usr/local/lib/emmgr
 
 emmgr CLI uses the first argument to select what module to run.
 
@@ -78,185 +97,509 @@ emmgr CLI uses the first argument to select what module to run.
 
 For documentation on each module, see module section below.
 
-
 ### Show em help
 
 	$ emmgr em
 	
 	No command specified, choose one of:
 	    configure
-	    get_running_config
-	    interface_clear_config
-	    list_models
-	    reload
-	    run
-	    save_running_config
-	    sw_copy_to
-	    sw_delete
-	    sw_delete_unneeded
-	    sw_exist
-	    sw_list
-	    sw_set_boot
-	    sw_upgrade
+		get_bootloader
+		get_running_config
+		interface_clear_config
+		interface_get_admin_state
+		interface_set_admin_state
+		l2_peers
+		license_get
+		license_set
+		list_models
+		reload
+		run
+		save_running_config
+		set_bootloader
+		set_startup_config
+		sw_copy_to
+		sw_delete
+		sw_delete_unneeded
+		sw_exist
+		sw_get_boot
+		sw_get_version
+		sw_list
+		sw_set_boot
+		sw_upgrade
+		vlan_create
+		vlan_delete
+		vlan_get
+		vlan_interface_create
+		vlan_interface_delete
+		vlan_interface_get
+		vlan_interface_set_native
+
+Each command has it's own set of command arguments. To view those:
+
+    $ emmgr em <command> -h
+
+example
+
+    $ emmgr em run -h
+
+	usage: emmgr [-h] [-H HOSTNAME] [-i IPADDR_MGMT] -m MODEL [-u USERNAME]
+				[-p PASSWORD] [-e ENABLE_PASSWORD] [-t]
+				[--loglevel {info,warning,error,debug}] [--json] -c COMMAND
+
+	optional arguments:
+	-h, --help            show this help message and exit
+	-H HOSTNAME, --hostname HOSTNAME
+							Hostname of element
+	-i IPADDR_MGMT, --ipaddr_mgmt IPADDR_MGMT
+							Management IP address of element
+	-m MODEL, --model MODEL
+							Element model
+	-u USERNAME, --username USERNAME
+							Username for connecting
+	-p PASSWORD, --password PASSWORD
+							Password for connecting
+	-e ENABLE_PASSWORD, --enable_password ENABLE_PASSWORD
+							Password for enable mode
+	-t, --telnet          Use Telnet
+	--loglevel {info,warning,error,debug}
+							Set loglevel, one of info, warning, error or debug
+	--json                Output result in json format
+	-c COMMAND, --command COMMAND
+							Command to run
+
+
+### Configure element (configure)
+
+todo
+
+### Get current bootloader (get_bootloader)
+
+todo
+
+
+### Get the running configuation (get_running_config)
+
+	$ emmgr em get_running_config -m ibos -H cb8w2
+	! version ibos-ms4k-7.3.5-ED-RC2 (ibos-ms4k-7.3.5-ED-RC2.bz2)
+	interface vlan212
+	<rest of output not shown here>
+
+
+### Clear all configuration on an interface (interface_clear_config)
+
+todo
+
+
+### Get administrative state on an interface (interface_get_admin_state)
+
+todo
+
+
+### Set admninistrative state on an interface (interface_set_admin_state)
+
+todo
+
+
+### Get layer2 peers (l2_peers)
+
+todo
+
+
+### Get license (get_license)
+
+todo
+
+
+### Set license (set_license)
+
+todo
+
+
+### List supported models (list_models)
+
+todo
+
+
+### Reload element (reload)
+
+todo
 
 
 ### Run a command and show output (run)
 
-todo
+	$ emmgr em run -m ibos -c 'show version' -H cb8w2
+	Intelligent Broadband Operating System (iBOS), Version 7.3.5-ED-RC2
+	<rest of output not shown here>
 
-### Fetch running_configuation (get_running_config)
-
-todo
 
 ### Save the running configuration to non-volatile storage (save_running_config)
+
+	$ emmgr em save_running_config -m ibos -H cb8w2 | more
+	Result : True
+
+
+### Set bootloader to use (set_bootloader)
+
+todo
+
+
+### Set startup configuration (set_startup_config)
+
+todo
+
+
+### Copy a firmware file to element (sw_copy_to)
+
+todo
+
+
+### Remove a firmware file from element (sw_delete)
+
+todo
+
+
+### Delete old files (sw_delete_unneeded)
+
+todo
+
+
+### Verify if a firmware exist (sw_exist)
+
+	$ emmgr em sw_exist -H bs3a1 --model asr920 --filename asr920-universalk9_npe.16.12.01.SPA.bin
+    Does firmware asr920-universalk9_npe.16.12.01.SPA.bin exist ?  True
+
+
+### Get bootloader (sw_get_boot)
+
+todo
+
+
+
+### Get version on running firmware (sw_get_version)
 
 todo
 
 
 ### Show all firmware files (sw_list)
 
-	alr@emmgr:/opt/emmgr$ ./element.py sw_list -H bj1a1 --model asr920
+	$ emmgr em sw_list -H bs3a1 --model asr920
 	Softare on element:
-	asr920-universalk9_npe.03.18.01.S.156-2.S1-std.bin
-	asr920-LUNET_CFD_316_PEGM.bin
-	asr920-universalk9_npe.03.16.02a.S.155-3.S2a-ext.bin
+		asr920-universalk9_npe.16.12.01.SPA.bin
+		asr920-universalk9_npe.03.18.03.SP.156-2.SP3-ext.bin
 
-### Verify if a firmware exist (sw_exist)
-
-	alr@emmgr:/opt/emmgr$ ./element.py sw_exist -H bj1a1 --model asr920 --filename asr920-universalk9_npe.03.18.01.S.156-2.S1-std.bin
-	
-	Does firmware asr920-universalk9_npe.03.18.01.S.156-2.S1-std.bin exist ?  True
-
-### Copy a firmware file to element (sw_copy_to)
-
-todo
 
 ### Configure boot firmware (sw_set_boot)
 
 todo
 
-### Remove a firmware file from element (sw_delete)
-
-todo
-
-### Delete old files (sw_delete_unneeded)
-
-todo
 
 #### Upgrade firmare (sw_upgrade)
 
 todo
 
+
+### Create a VLAN (vlan_create)
+
+todo
+
+
+### Delete a VLAN (vlan_delete)
+
+todo
+
+
+### Get info on a VLAN (vlan_get)
+
+todo
+
+
+### Add a VLAN on an interface (vlan_interface_create)
+
+Todo
+
+
+### Delete a VLAN from an interface (vlan_interface_delete)
+
+Todo
+
+
+### Get all VLANs on an interface (vlan_interface_get)
+
+Todo
+
+
+### Set native VLAN on an interface (vlan_interface_set_native)
+
+Todo
+
+
 ----------------------------------------------------------------------
 
-# Use emmgr as a library
+# Library functions
 
-Most of the library modules can be directly executed, or be imported and used as libraries by other python scripts.
+All the above commands can also be used from Python.
 
-Note, to be able to use these from CLI, set PYTHONPATH. Example:
+Note, to be able to use these from Python, set PYTHONPATH. emmgr loads drivers etc dynamically,
+without the PYTHONPATH it will not find them.
+
+Example:
 
 	$ export PYTHONPATH=/opt
-	$ cd /opt/emmgr/lib
-	$ ./element.py
-	<output from script>
 
 
 ## Element manager
 
-| Base directory        | Description               |
+
+| Path                  | Description               |
 | ----------------------| ------------------------- |
 | /opt/emmgr/element.py | A generic module for doing element management |
 
-element.py can be executed directly as a script, or imported from other code and user as a library.
+
+element.py can be executed directly as a script (mostly used during development), or imported from other code and user as a library.
 
 element.py is using a generic class and drivers for vendor specific communication. Each driver has its own configuration file.
 
-Generic drivers exist for
+Available methods:
 
-* Cisco IOS
-* Huawei VRP
-* Waystream (PacketFront) iBOS
-* ZTE zxros
+### Configure element (configure)
 
-Specific drivers exist for
+todo
 
-* Cisco ASR920 (IOS)
-* Cisco ME3400 (IOS)
-* Cisco C4500 (IOS)
-* Huawei S5700 (VRP)
-* Waystream MS4000 (iBOS)
-* ZTE RS5128 (zxros)
+### Get current bootloader (get_bootloader)
+
+todo
 
 
+### Get the running configuation (get_running_config)
 
-## Show all firmware files (sw_list)
+todo
+
+### Clear all configuration on an interface (interface_clear_config)
+
+todo
+
+
+### Get administrative state on an interface (interface_get_admin_state)
+
+todo
+
+
+### Set admninistrative state on an interface (interface_set_admin_state)
+
+todo
+
+
+### Get layer2 peers (l2_peers)
+
+todo
+
+
+### Get license (get_license)
+
+todo
+
+
+### Set license (set_license)
+
+todo
+
+
+### List supported models (list_models)
+
+todo
+
+
+### Reload element (reload)
+
+todo
+
+
+### Run a command and show output (run)
+
+todo
+
+
+### Save the running configuration to non-volatile storage (save_running_config)
+
+todo
+
+
+### Set bootloader to use (set_bootloader)
+
+todo
+
+
+### Set startup configuration (set_startup_config)
+
+todo
+
+
+### Copy a firmware file to element (sw_copy_to)
+
+todo
+
+
+### Remove a firmware file from element (sw_delete)
+
+todo
+
+
+### Delete old files (sw_delete_unneeded)
+
+todo
+
+
+### Verify if a firmware exist (sw_exist)
+
+todo
+
+
+### Get bootloader (sw_get_boot)
+
+todo
+
+
+### Get version on running firmware (sw_get_version)
+
+todo
+
+
+### Show all firmware files (sw_list)
 
 Contents of sw_list.py
 
     #!/usr/bin/env python3
     
-    import element
+    import emmgr.lib.element as element
+
+	# Create an instance (loads drivers etc)
     e = element.Element(hostname=”bj1a1”, model=”asr920”)
+
+	# Execute method and show result
     for sw in e.sw_list():
         print(sw)
-	        
+
+
+Output when run
+
 	$ ./sw_list.py
 	asr920-universalk9_npe.03.18.01.S.156-2.S1-std.bin
 	asr920-LUNET_CFD_316_PEGM.bin
 	asr920-universalk9_npe.03.16.02a.S.155-3.S2a-ext.bin
 
 
+### Configure boot firmware (sw_set_boot)
+
+todo
+
+
+#### Upgrade firmare (sw_upgrade)
+
+todo
+
+
+### Create a VLAN (vlan_create)
+
+todo
+
+
+### Delete a VLAN (vlan_delete)
+
+todo
+
+
+### Get info on a VLAN (vlan_get)
+
+todo
+
+
+### Add a VLAN on an interface (vlan_interface_create)
+
+Todo
+
+
+### Delete a VLAN from an interface (vlan_interface_delete)
+
+Todo
+
+
+### Get all VLANs on an interface (vlan_interface_get)
+
+Todo
+
+
+### Set native VLAN on an interface (vlan_interface_set_native)
+
+Todo
+
+
+
+### Show all firmware files (sw_list)
+
+Todo
+
+
+## basedriver.py
+
+
+| Path                   | Description               |
+| ---------------------- | ------------------------- |
+| /opt/emmgr/lib/basedriver.py | Base functionality for all drivers |
+
+
+## cli.py
+
+| Path                   | Description               |
+| ---------------------- | ------------------------- |
+| /opt/emmgr/lib/cli.py  | CLI definition for drivers and emmgr command |
+
+The CLI is defined in this file, and used by all drivers, the emmgr em command
+
+
 ## comm.py
 
-Communicates with an element over telnet or ssh. Similar to expect.
-
-Has no functionality when used directly as a script.
+| Path                   | Description               |
+| -----------------------| ------------------------- |
+| /opt/emmgr/lib/comm.py | Communicates with an element over telnet or ssh. Similar to expect |
 
 
 ## config.py
 
-Reads the emmgr configuration file
+| Path                      | Description               |
+| --------------------------| ------------------------- |
+| /opt/emmgr/lib/config.py  | Reads the emmgr configuration file |
+
+Has no functionality when used directly as a script.
 
 
-## List all files in a element (sw_list)
+## emtypes.py
 
-	alr@emmgr:/opt/emmgr/em$ ./element.py sw_list -H bj1a1 --model asr920
-	Softare on element:
-	asr920-universalk9_npe.03.18.01.S.156-2.S1-std.bin
-	asr920-LUNET_CFD_316_PEGM.bin
-	asr920-universalk9_npe.03.16.02a.S.155-3.S2a-ext.bin
+| Path                      | Description               |
+| --------------------------| ------------------------- |
+| /opt/emmgr/lib/emtypes.py | Defines high level data types |
+
+Here are classes that define
+- MAC_Address
+- VLAN, VLANs
+- Peers, Peer (L2 connectivity)
+
+Has no functionality when used directly as a script.
 
 
-## Check if a file exist in a element (sw_exist)
+## log.py
 
-	alr@emmgr:/opt/emmgr/em$ ./element.py sw_exist -H bj1a1 --model asr920 --filename asr920-universalk9_npe.03.18.01.S.156-2.S1-std.bin
-	
-	Does firmware asr920-universalk9_npe.03.18.01.S.156-2.S1-std.bin exist ?  True
+| Path                      | Description               |
+| --------------------------| ------------------------- |
+| /opt/emmgr/lib/log.py     | Used for logging, default syslog |
 
-## Copy a file to element (sw_copy_to)
-
-todo
-
-## Set firmware to boot (sw_set_boot)
-
-todo
-
-## Delete a file (sw_delete)
-
-todo
-
-## Delete old files (sw_delete_unneeded)
-
-todo
-
-## Upgrade firmare (sw_upgrade)
-
-todo
+Has no functionality when used directly as a script.
 
 
 ## util.py
 
-Various help functions.
+| Path                     | Description               |
+| -------------------------| ------------------------- |
+| /opt/emmgr/lib/util.py   | Various help functions |
 
 Has no functionality when used directly as a script.
 
@@ -268,8 +611,10 @@ Has no functionality when used directly as a script.
 
 Here are documentation related to development of emmgr and its driver modules
 
+Todo
 
-# IDE
+
+## IDE
 
 The development of emmgr is done using visual studio code with the python extension
 
@@ -284,4 +629,4 @@ The development of emmgr is done using visual studio code with the python extens
     * default firmware
     * filter to filter out firmware files
 
-When creating a new driver, it is easiest to copy an existing and modify this
+When creating a new driver, it is easiest to copy an existing and modify it.
