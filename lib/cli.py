@@ -265,12 +265,22 @@ class CLI_interface_set_admin_state(BaseCLI):
 
 class CLI_l2_peers(BaseCLI):
 
+    def add_arguments(self):
+        super().add_arguments()
+        self.parser.add_argument("--interface",
+                                 help='Interface to get peers for',
+                                 )
+        self.parser.add_argument("--domain",
+                                 help='Default domain for hostnames',
+                                 )
     def run(self):
         try:
             super().run()
-            peers = self.mgr.l2_peers()
-            for peer in peers:
-                print("peer", peer)
+            peers = self.mgr.l2_peers(interface=self.args.interface,
+                                      default_domain=self.args.domain)
+            for ifname, peer in peers:
+                print(peer, "\n")
+
         except self.mgr_cls.ElementException as err:
             print("Error: %s" % err)
 
