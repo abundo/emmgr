@@ -182,7 +182,7 @@ class RemoteConnection:
                     self._buffer = b""
                 return data.decode(self._codec, errors="ignore")
 
-            events = self.selector_r.select()    # We ignore the event, only one socket
+            events = self.selector_r.select(timeout=timeout)    # We ignore the event, only one socket
             try:
                 if length:
                     data = self.conn.read(length)
@@ -203,7 +203,7 @@ class RemoteConnection:
                 data, tmp, self._buffer = self._buffer.partition(b"\r\n")
                 return data.decode(self._codec)
 
-            events = self.selector_r.select()    # We ignore the event, only one socket
+            events = self.selector_r.select(timeout=timeout)    # We ignore the event, only one socket
             try:
                 data = os.read(sock, 4096)
                 if data == "":
