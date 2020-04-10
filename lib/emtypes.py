@@ -133,7 +133,7 @@ class Peer(AttrDict):
     #     self.remote_description = remote_description
 
     def __str__(self):
-        return "Peer(local_if %s, remote_hostname %s, remote_mac %s, remote_if %s, remote_ipaddr %s, remote_description %s)" % (\
+        return "Peer(local_if '%s', remote_hostname '%s', remote_mac '%s', remote_if '%s', remote_ipaddr '%s', remote_description '%s')" % (\
             self.local_if, 
             self.remote_hostname, 
             self.remote_mac,
