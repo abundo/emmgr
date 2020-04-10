@@ -318,11 +318,13 @@ class Expect:
     def read(self, maxlen):
         return self.transport.read(maxlen)
 
-    def write(self, msg):
+    def write(self, msg=None):
+        if msg == None: msg = ""
         log.debug("------------------- write('%s') -------------------" % msg)
         self.transport.write(msg)
 
     def writeln(self, msg=None):
+        if msg == None: msg = ""
         log.debug("------------------- writeln('%s') -------------------" % msg)
         self.transport.writeln(msg)
 
