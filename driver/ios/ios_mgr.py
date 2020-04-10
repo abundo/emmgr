@@ -18,6 +18,7 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
     def __init__(self, **kwargs):
         if not hasattr(self, 'model'):
             self.model = "ios"
+        kwargs["newline"] = "\r\n"
         super().__init__(**kwargs)
     
     # ########################################################################
@@ -45,7 +46,6 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
             self.em.writeln(self.password)
     
         # Go to enable mode
-        self.em.writeln()
         match = self.em.expect( { "disable": r">", "enable": r"#"} )
         if match is None:
             raise self.ElementException("Error waiting for CLI prompt")
@@ -55,7 +55,6 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
             if match is None:
                 raise self.ElementException("Error waiting for prompt after enable")
             self.em.writeln(self.enable_password)
-            self.wait_for_prompt()
             
         self.em.writeln("terminal length 0")
         self.wait_for_prompt()
@@ -113,9 +112,9 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
         returns a list with configuration lines, optionally filtering lines with a regex
         """
         self.connect()
+        self.wait_for_prompt()
         log.debug("------------------- run() -------------------")
         self.em.writeln(cmd)
-        self.wait_for_prompt()
         output = self.em.before.split("\r\n")
         if len(output) > 1:
             output = output[1:-1]
