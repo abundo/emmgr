@@ -687,9 +687,22 @@ class IBOS_Manager(emmgr.lib.basedriver.BaseDriver):
     def get_bootloader(self, callback=None):
         """       
         Returns current bootloader
+
+        Two formats:
+        1)
+            show version | i ^Bootloader
+            Bootloader version: asrboot-asr5k-3.1.4-R
+        2)
+            show version | i ^Bootloader
+            Bootloader version: asrboot-asr6k-4.0.3-R
+            Bootloader version on flash: asrboot-asr6k-4.0.4-R
+
+        We always return the "Bootloader version:"
+        
+        2) Seems to show up when bootloader on flash is different than running bootloader
         """
         self.connect()
-        cmd = 'show ver | include "^Bootloader"'
+        cmd = 'show ver | include "^Bootloader version:"'
         lines = self.run(cmd)
         if len(lines) != 1:
             raise self.ElementException("Cannot find bootloader in use: %s" % lines)
