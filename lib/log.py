@@ -21,7 +21,7 @@ level_dict = {'info': logging.INFO,
 def activateSyslog():
     syslogger = logging.handlers.SysLogHandler(address='/dev/log')
 
-    formatter = logging.Formatter('%(module)s [%(process)d]: %(levelname)s %(message)s')
+    formatter = logging.Formatter('%(levelname)s %(message)s')
     syslogger.setFormatter(formatter)
     logger.addHandler(syslogger)
 
