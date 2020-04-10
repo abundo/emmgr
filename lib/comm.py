@@ -173,7 +173,7 @@ class RemoteConnection:
         """
         while True:
             # return data from buffer if we have any
-            if length and len(self._buffer):
+            if len(self._buffer):
                 if length < len(self._buffer):
                     data = self._buffer[:length]
                     self._buffer = self._buffer[length:]
