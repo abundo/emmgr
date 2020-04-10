@@ -15,6 +15,18 @@ import ssh2.session
 import emmgr.lib.log as log
 
 
+# All ssh base exceptions
+ssh_exceptions = (
+    ssh2.exceptions.SSH2Error,
+    ssh2.exceptions.AgentError,
+    ssh2.exceptions.AuthenticationError,
+    ssh2.exceptions.SessionError,
+    ssh2.exceptions.PublicKeyError,
+    ssh2.exceptions.ChannelError,
+    ssh2.exceptions.SFTPError,
+    ssh2.exceptions.KnownHostError
+)
+
 class CommException(Exception):
     def __init__(self, errno, message):
         self.errno = errno
@@ -33,7 +45,7 @@ class Telnet_Connection:
             port = 23
         try:
             self.tn = telnetlib.Telnet(host=str(host), port=port, timeout=timeout)
-        except socket.timeout as err:
+        except (ConnectionError, socket.error, EOFError) as err:
             raise CommException(1, "Timeout connecting to %s" % host)
         self.fd = self.tn.fileno()
     
@@ -44,10 +56,16 @@ class Telnet_Connection:
         return self.tn.get_socket()
 
     def read(self, length=None, timeout=None):
-        return self.tn.read_eager()
+        try:
+            return self.tn.read_eager()
+        except (ConnectionError, socket.error, EOFError) as err:
+            raise CommException(1, str(err))
     
     def write(self, data):
-        self.tn.write(data)
+        try:
+            self.tn.write(data)
+        except (ConnectionError, socket.error, EOFError) as err:
+            raise CommException(1, str(err))
 
 
 class SSH_Connection:
@@ -82,7 +100,7 @@ class SSH_Connection:
             self.channel.pty(term="vt100")
             # self.channel.pty(term="dumb")
             self.channel.shell()
-        except ssh2.exceptions.SSH2Error as err:
+        except ssh_exceptions as err:
             raise CommException(1, "Cannot connect using ssh, err: %s" % err)
         self.fd = self.sock.fileno()
 
@@ -173,7 +191,7 @@ class RemoteConnection:
                     data = self.conn.read()
                 if data == "":
                     return None  # disconnected
-            except OSError:
+            except ssh_exceptions as err:
                 return None  # disconnect
             self._buffer += data
 
