@@ -125,7 +125,7 @@ class SSH_Connection:
 class RemoteConnection:
     """
     Open a telnet or ssh connection
-    This class 
+    
     - handles the decode/encode between string and bytes
     - ensures that all newlines follows unix style "\n"
     """
@@ -180,7 +180,7 @@ class RemoteConnection:
                 else:
                     data = self._buffer
                     self._buffer = b""
-                return data.decode(self._codec)
+                return data.decode(self._codec, errors="ignore")
 
             events = self.selector_r.select()    # We ignore the event, only one socket
             try:
