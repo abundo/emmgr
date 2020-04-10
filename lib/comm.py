@@ -97,8 +97,7 @@ class SSH_Connection:
             self.ssh_session.userauth_password(username, password)
 
             self.channel = self.ssh_session.open_session()
-            self.channel.pty(term="vt100")
-            # self.channel.pty(term="dumb")
+            self.channel.pty(term="dumb")
             self.channel.shell()
         except ssh_exceptions as err:
             raise CommException(1, "Cannot connect using ssh, err: %s" % err)
