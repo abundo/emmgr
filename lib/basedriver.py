@@ -148,7 +148,7 @@ class BaseDriver:
         raise self.ElementException("Not implemented")
         
     def connect(self):
-        log.debug("------------------- connect(%s) -------------------" % self.hostname)
+        log.debug("------------------- connect(%s, use_ssh=%s) -------------------" % (self.hostname, self.use_ssh))
         try:
             self.transport.connect(self.hostname, port=self.port, username=self.username, password=self.password)
         except comm.CommException as err:
