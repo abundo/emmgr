@@ -10,7 +10,7 @@ from orderedattrdict import AttrDict
 
 with open("/etc/emmgr/emmgr.yaml", "r") as f:
     try:
-        configtmp = yaml.load(f)
+        configtmp = yaml.load(f, Loader=yaml.FullLoader)
     except yaml.YAMLError as err:
         print("Error: Cannot load configuration, err: %s" % err)
         sys.exit(1)
