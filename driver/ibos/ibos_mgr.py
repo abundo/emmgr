@@ -34,22 +34,28 @@ class IBOS_Manager(emmgr.lib.basedriver.BaseDriver):
             return
         super().connect()
 
-        if not self.use_ssh:
-            match = self.em.expect(r"sername:")
-            if match is None:
-                raise self.ElementException("Error waiting for username prompt")
-            self.em.writeln(self.username)
+        while True:
+            match = self.em.expect({ 
+                "failed":   r"Login incorrect",
+                "username": r"sername:", 
+                "password": r"assword:", 
+                "disable": r">",
+                "enable": r"#",
+                })
+            if match == "username":
+                self.em.writeln(self.username)
+                continue
+            elif match == "password":
+                self.em.writeln(self.password)
+                self.em.before = self.em.before[:-1]
+                continue
+            elif match in ["disable", "enable"]:
+                break
+            elif match == "failed":
+                raise self.ElementException("Invalid username/password", errno=self.USERNAME_PASSWORD_INVALID)
 
-            match = self.em.expect( { "password": r"password:", "disable": r">"} )
-            if match is None:
-                raise self.ElementException("Error waiting for password prompt")
-            self.em.writeln(self.password)
-            self.em.before = self.em.before[:-1]
+            raise self.ElementException("Error logging in, no username/password prompt")
 
-        # Go to enable mode
-        match = self.em.expect( { "disable": r">", "enable": r"# "} )
-        if match is None:
-            raise self.ElementException("Error waiting for CLI prompt")
         if match == 'disable':
             self.em.writeln("enable")
             match = self.em.expect(r"assword:")
