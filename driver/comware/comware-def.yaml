@@ -1,0 +1,25 @@
+---
+driver: comware/comware_mgr
+firmware_device: 'flash:'
+firmware_filter: 'none'
+
+config:
+  wait_for_prompt:
+    - \r\n<.*>
+    - \r\n\[.*\]
+
+  interface:
+    enable:
+      cmd: |
+        interface {{ interface_name }}
+          no shutdown
+
+    disable:
+      cmd: |
+         interface {{ interface_name }}
+           shutdown
+
+    # ???
+    # clear_config:
+    #   cmd:
+    #   - "default interface {{ interface_name }}"
