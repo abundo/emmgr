@@ -34,22 +34,30 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
             return
         super().connect()
 
-        if not self.use_ssh:
-            match = self.em.expect(r"sername:")
-            if match is None:
-                raise self.ElementException("Error waiting for username prompt")
-            self.em.writeln(self.username)
+        # % Authentication failed
 
-            match = self.em.expect(r"assword:")
-            if match is None:
-                raise self.ElementException("Error waiting for password prompt")
-            self.em.writeln(self.password)
-    
-        # Go to enable mode
-        match = self.em.expect( { "disable": r">", "enable": r"#"} )
-        if match is None:
-            raise self.ElementException("Error waiting for CLI prompt")
-        if match == 'disable':
+        while True:
+            match = self.em.expect({ 
+                "failed":   r"Authentication failed",
+                "username": r"sername:", 
+                "password": r"assword:", 
+                "disable": r">",
+                "enable": r"#",
+                })
+            if match == "username":
+                self.em.writeln(self.username)
+                continue
+            elif match == "password":
+                self.em.writeln(self.password)
+                continue
+            elif match in ["disable", "enable"]:
+                break
+            elif match == "failed":
+                raise self.ElementException("Invalid username/password", errno=self.USERNAME_PASSWORD_INVALID)
+
+            raise self.ElementException("Error logging in, no username/password prompt")
+
+        if match == "disable":
             self.em.writeln("enable")
             match = self.em.expect(r"assword:")
             if match is None:
@@ -112,9 +120,9 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
         returns a list with configuration lines, optionally filtering lines with a regex
         """
         self.connect()
-        self.wait_for_prompt()
         log.debug("------------------- run() -------------------")
         self.em.writeln(cmd)
+        self.wait_for_prompt()
         output = self.em.before.split("\r\n")
         if len(output) > 1:
             output = output[1:-1]
