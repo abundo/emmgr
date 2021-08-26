@@ -19,13 +19,17 @@ dummy = object()        # Used to differentiate between dummy and None
 
 
 class ElementException(Exception):
-    pass
+    def __init__(self, msg, errno=1):
+        self.msg = msg
+        self.errno = errno
 
 
 class BaseDriver:
     """
     Base class for all drivers
     """
+
+    USERNAME_PASSWORD_INVALID = 2
 
     ElementException = ElementException
 
