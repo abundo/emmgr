@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """
-A driver to manage Cisco IOS and IOS-XE elements
+A driver to manage Cisco SMB elements
 """
 
 import sys
 import re
+import time
 from orderedattrdict import AttrDict
 
 import emmgr.lib.log as log
 import emmgr.lib.comm as comm
+import emmgr.lib.emtypes as emtypes
 import emmgr.lib.basedriver
 
 
@@ -33,7 +35,10 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
         super().connect()
 
         while True:
-            match = self.em.expect( { "username": r"User Name:", "password": r"assword:" } )
+            match = self.em.expect({
+                "username": r"User Name:", 
+                "password": r"assword:",
+                })
             if match == "username":
                 self.em.writeln(self.username)
                 continue
@@ -74,40 +79,6 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
             self.transport.disconnect()
             self.transport = None
             
-#     def reload(self, save_config=True, callback=None):
-#         """
-#         Reload the element. If running-config is unsaved, option to save it
-#         """
-#         self.connect()
-#         log.debug("------------------- reload() -------------------")
-#         self.em.writeln("reload")
-#         
-#         while True:
-#             match = self.em.expect( {
-#                     "confirm": "yes/no",
-#                     "reloading": "confirm",
-#                     "reloading1": "closed by remote host", 
-#                     "reloading2": "closed by foreign host", 
-#                     "reloading3": "Reload command.", 
-#                     })
-#             log.debug("Reload match: %s" % match)
-#             if match == "reloading":
-#                 self.em.writeln("y")
-# 
-#             elif match == "confirm":
-#                 # configuration is not saved, do so
-#                 if save_config:
-#                     self.em.writeln("y")
-#                 else:
-#                     self.em.writeln("n")
-#             else:
-#                 break
-#         
-#         # Force the connection closed
-#         self.em = None
-#         self.transport.disconnect()
-#         self.transport = None
-
     def run(self, cmd=None, filter_=None, timeout=None, callback=None):
         """
         Run a command on element
@@ -132,6 +103,7 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
         """
         Reconfigure device
         """
+        ret = []
         self.connect()
         log.debug("------------------- configure() -------------------")
         config_lines = self.str_to_lines(config_lines)
@@ -139,12 +111,15 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
         self.wait_for_prompt()
         for config_line in config_lines:
             self.em.writeln(config_line)
-            self.wait_for_prompt()
+            ret = self.wait_for_prompt()
+            if ret:
+                ret += self.em.before
+            # time.sleep(1)
         self.em.writeln("end")
         self.wait_for_prompt()
         if save_running_config:
             self.save_running_config()
-        return True
+        return ret
 
     def get_running_config(self, filter_=None, refresh=False, callback=None):
         """
@@ -215,65 +190,58 @@ class IOS_Manager(emmgr.lib.basedriver.BaseDriver):
     # Topology
     # ########################################################################
 
-    class Peer:
-        def __init__(self, hostname=None, 
-                    ipaddr_mgmt=None,
-                    local_if=None, 
-                    remote_if=None, 
-                    remote_platform=None):
-            self.hostname = hostname
-            self.ipaddr_mgmt = ipaddr_mgmt
-            self.local_if = local_if
-            self.remote_if = remote_if
-            self.remote_platform = remote_platform
-            
-        def __str__(self):
-            return "Peer(hostname %s, local_if %s, remote_if %s, remote_platform %s)" % \
-               (self.hostname, self.local_if, self.remote_if, self.remote_platform)
-
-    def add_peer(self, peers, peer):
-        if peer is None:
-            return
-        if peer.local_if:
-            key = peer.local_if
-        else:
-            key = peer.hostname
-        peers[key] = peer
-
-    def l2_peers(self):
+    def l2_peers(self, interface=None, default_domain=None):
         """
-        Returns the device L2 neighbours, using CDP, LLDP and similar protocols
+        Returns the device L2 neighbours using LLDP
+
+        asw1014#show lldp neighbors gi10
+
+        Device ID: dc:ce:c1:ff:d5:e4
+        Port ID: gi9
+        Capabilities: Bridge
+        System Name: asw1013
+        System description: 
+        Port description: 
+        Time To Live: 98
+
+        802.1 PVID: 1
+        802.1 PPVID: 
+        802.1 VLAN:
+        802.1 Protocol: 
         """
 
-        lines = self.run(cmd='show cdp neighbors detail')
-        peers = {}
-        peer = None
-        for line in lines:
-            if line.startswith('Device ID'):
-                self.add_peer(peers, peer)
-                tmp = line.split()
-                peer = self.Peer(hostname=tmp[2])
-                state = 2
-            else:
-                if peer:
-                    tmp = line.lower().split()
-                    # print("tmp", tmp)
-                    if len(tmp) < 1:
-                        continue
-                    if tmp[0] == 'platform:':
-                        peer.remote_platform = tmp[2]
-                    elif tmp[0] == 'interface:':
-                        peer.local_if = tmp[1].replace(",", "")
-                        peer.remote_if = tmp[6]
-                    elif tmp[0] == 'ip' and tmp[1] == 'address:':
-                        peer.ipaddr_mgmt = tmp[2]
-        self.add_peer(peers, peer)
+        peers = emtypes.Peers()
+        for i in range(1,11):
+            device_id = None
+            system_name = None
+            port_id = None
+            local_if = "gigabitethernet%i" % i
+            cmd = "show lldp neighbors %s" % local_if
+            lines = self.run(cmd=cmd)
+            for line in lines:
+                if not line:
+                    continue
+                tmp = line.split(":", 1)
+                if len(tmp) == 2:
+                    key = tmp[0].strip()
+                    val = tmp[1].strip()
+                    if key == "Device ID":
+                        device_id = val
+                    elif key == "Port ID":
+                        port_id = val
+                    elif key == "System Name":
+                        system_name = val
+            if system_name and port_id:
+                peer = emtypes.Peer(local_if=local_if)
+                peer.remote_hostname = system_name
+                peer.remote_mac = device_id
+                peer.remote_if = port_id
+                peer.remote_ipaddr = ""
+                peer.remote_description = ""
+                peers.add(peer)
 
-        keys = sorted(peers.keys())
-        tmp = []
-        for key in keys:
-            tmp.append(peers[key])
-        return tmp
+        return peers
+
 
     # ########################################################################
     # VLAN management
